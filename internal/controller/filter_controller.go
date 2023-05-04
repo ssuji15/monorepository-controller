@@ -21,7 +21,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"github.com/denormal/go-gitignore"
+	"github.com/fluxcd/pkg/sourceignore"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -46,15 +46,15 @@ func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.Resource
 	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
 		Name: "FilteredRepository",
 		Reconciler: reconcilers.Sequence[*v1alpha1.FilteredRepository]{
-			NewMixer(c),
+			NewChecksumCalculator(c),
 		},
 		Config: c,
 	}
 }
 
-func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
+func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
 	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
-		Name: "Mixer",
+		Name: "ChecksumCalculator",
 		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
 			// create a temporary directory
 			tempDir, err := os.MkdirTemp("", "tmp")
@@ -105,19 +105,15 @@ func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.Filtered
 					return err
 				}
 
-				files, err := dirhash.DirFiles(tarGzExtractedLocation, "PREFIX")
+				files, err := dirhash.DirFiles(tarGzExtractedLocation, "")
 				if err != nil {
 					return err
 				}
 
 				logrus.Infof("Got files %s", files)
 
-				filterOn := `!.git
-go.*
-internal/**/*.go`
-
-				ignore := gitignore.New(strings.NewReader(filterOn), tarGzExtractedLocation, nil)
-				logrus.Infof("ignore %s", ignore)
+				filteredFiles := FilterFileList(files, resource.Spec.Include)
+				logrus.Infof("Using files %s for checksum calculation", filteredFiles)
 
 			}
 
@@ -213,4 +209,25 @@ func ExtractTarGz(tarGzPath string, dir string) error {
 		}
 	}
 	return nil
+}
+
+func FilterFileList(list []string, include string) []string {
+	var domain []string
+	patterns := sourceignore.ReadPatterns(strings.NewReader(include), domain)
+	matcher := sourceignore.NewDefaultMatcher(patterns, domain)
+
+	logrus.Infof("got patterns %+v", patterns)
+
+	var filtered []string
+	for _, file := range list {
+		logrus.Debugf("checking %s", file)
+
+		fileParts := strings.Split(file, string(filepath.Separator))
+
+		if matcher.Match(fileParts, false) {
+			filtered = append(filtered, file)
+		}
+	}
+
+	return filtered
 }

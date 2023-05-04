@@ -7,16 +7,16 @@ import (
 )
 
 // +die:object=true
-type _ = v1alpha1.Filter
+type _ = v1alpha1.FilteredRepository
 
 // +die
-type _ = v1alpha1.FilterSpec
+type _ = v1alpha1.FilteredRepositorySpec
 
 // +die
-type _ = v1alpha1.FilterStatus
+type _ = v1alpha1.FilteredRepositoryStatus
 
-func (d *FilterStatusDie) ConditionsDie(conditions ...*v1.ConditionDie) *FilterStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilterStatus) {
+func (d *FilteredRepositoryStatusDie) ConditionsDie(conditions ...*v1.ConditionDie) *FilteredRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
 		r.Conditions = make([]metav1.Condition, len(conditions))
 		for i := range conditions {
 			r.Conditions[i] = conditions[i].DieRelease()
