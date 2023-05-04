@@ -21,17 +21,19 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"github.com/denormal/go-gitignore"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
-	cp "github.com/otiai10/copy"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
+	"golang.org/x/mod/sumdb/dirhash"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=filters,verbs=get;list;watch;create;update;patch;delete
@@ -55,69 +57,68 @@ func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.Filter] 
 		Name: "Mixer",
 		Sync: func(ctx context.Context, resource *v1alpha1.Filter) error {
 			// create a temporary directory
-			tempDir, err := os.MkdirTemp("", "mixer")
+			tempDir, err := os.MkdirTemp("", "tmp")
 			if err != nil {
 				return err
 			}
 
 			logrus.Infof("creating temp dir %s", tempDir)
 
-			generated := filepath.Join(tempDir, "generated")
-			err = os.Mkdir(generated, 0755)
+			// resolve the input
+			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
+
+			component := GetKind(resource.Spec.SourceRef.Kind)
+
+			err = c.Client.Get(ctx, key, component)
 			if err != nil {
-				return err
+				if errors.IsNotFound(err) {
+					logrus.Warnf("unable to resolve %s", key)
+					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
+				} else {
+					logrus.Errorf("error resolving %s", key)
+					resource.Status.MarkFailed(err)
+				}
+				return nil
 			}
 
-			// for each source that is in the list
-			for _, source := range resource.Spec.Include {
-				// resolve the input
-				key := source.Key(resource.ObjectMeta.Namespace)
+			// parse the status
+			a, ok := component.(Artifacter)
+			if !ok {
+				logrus.Errorf("component does not have an artifact")
+			}
 
-				component := GetKind(source.Ref.Kind)
+			artifact := a.GetArtifact()
+			if artifact != nil {
+				logrus.Infof("got artifact %+v", artifact)
 
-				err := c.Client.Get(ctx, key, component)
+				// download the filter and copy from/to path
+				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
+				err = DownloadFile(tarGzLocation, artifact.URL)
 				if err != nil {
-					if errors.IsNotFound(err) {
-						logrus.Warnf("unable to resolve %s", key)
-						resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
-					} else {
-						logrus.Errorf("error resolving %s", key)
-						resource.Status.MarkFailed(err)
-					}
-					return nil
+					return err
 				}
 
-				// parse the status
-				a, ok := component.(Artifacter)
-				if !ok {
-					logrus.Errorf("component does not have an artifact")
+				// extract tar.gz to temp location
+				tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", resource.Spec.SourceRef.Name))
+				err = ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
+				if err != nil {
+					return err
 				}
 
-				artifact := a.GetArtifact()
-				if artifact != nil {
-					logrus.Infof("got artifact %+v", artifact)
-
-					// download the filter and copy from/to path
-					tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", source.Ref.Name))
-					err = DownloadFile(tarGzLocation, artifact.URL)
-					if err != nil {
-						return err
-					}
-
-					// extract tar.gz to temp location
-					tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", source.Ref.Name))
-					err = ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
-					if err != nil {
-						return err
-					}
-
-					// copy via glob
-					// FIXME implement globbing
-					err = cp.Copy(tarGzExtractedLocation, generated)
-					if err != nil {
-						return err
-					}
+				files, err := dirhash.DirFiles(tarGzExtractedLocation, "PREFIX")
+				if err != nil {
+					return err
 				}
+
+				logrus.Infof("Got files %s", files)
+
+				filterOn := `!.git
+go.*
+internal/**/*.go`
+
+				ignore := gitignore.New(strings.NewReader(filterOn), tarGzExtractedLocation, nil)
+				logrus.Infof("ignore %s", ignore)
+
 			}
 
 			return nil
@@ -128,6 +129,8 @@ func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.Filter] 
 func GetKind(kind string) client.Object {
 	if kind == "OCIRepository" {
 		return &apiv1beta2.OCIRepository{}
+	} else if kind == "HelmRepository" {
+		return &apiv1beta2.HelmRepository{}
 	}
 	return &apiv1beta2.GitRepository{}
 }
@@ -138,6 +141,7 @@ type Artifacter interface {
 
 var _ Artifacter = (*apiv1beta2.GitRepository)(nil)
 var _ Artifacter = (*apiv1beta2.OCIRepository)(nil)
+var _ Artifacter = (*apiv1beta2.HelmRepository)(nil)
 
 // DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.

@@ -35,39 +35,72 @@ spec:
           spec:
             description: FilterSpec defines the structure of the filter
             properties:
-              include:
-                items:
-                  properties:
-                    fromPath:
-                      type: string
-                    source:
-                      description: SourceRef the GVK and name of the source object
-                      properties:
-                        apiVersion:
-                          type: string
-                        kind:
-                          type: string
-                        name:
-                          type: string
-                      required:
-                      - apiVersion
-                      - kind
-                      - name
-                      type: object
-                    toPath:
-                      type: string
-                  required:
-                  - fromPath
-                  - source
-                  - toPath
-                  type: object
-                type: array
+              sourceRef:
+                description: SourceRef the GVK and name of the source object
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                type: object
             required:
-            - include
+            - sourceRef
             type: object
           status:
             description: FilterStatus defines the observed state of Filter
             properties:
+              artifact:
+                description: Artifact represents the last successful GitRepository
+                  reconciliation.
+                properties:
+                  checksum:
+                    description: 'Checksum is the SHA256 checksum of the Artifact
+                      file. Deprecated: use Artifact.Digest instead.'
+                    type: string
+                  digest:
+                    description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
+                    pattern: ^[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+$
+                    type: string
+                  lastUpdateTime:
+                    description: LastUpdateTime is the timestamp corresponding to
+                      the last update of the Artifact.
+                    format: date-time
+                    type: string
+                  metadata:
+                    additionalProperties:
+                      type: string
+                    description: Metadata holds upstream information such as OCI annotations.
+                    type: object
+                  path:
+                    description: Path is the relative file path of the Artifact. It
+                      can be used to locate the file in the root of the Artifact storage
+                      on the local file system of the controller managing the Source.
+                    type: string
+                  revision:
+                    description: Revision is a human-readable identifier traceable
+                      in the origin source system. It can be a Git commit SHA, Git
+                      tag, a Helm chart version, etc.
+                    type: string
+                  size:
+                    description: Size is the number of bytes in the file.
+                    format: int64
+                    type: integer
+                  url:
+                    description: URL is the HTTP address of the Artifact as exposed
+                      by the controller managing the Source. It can be used to retrieve
+                      the Artifact for consumption, e.g. by another controller applying
+                      the Artifact contents.
+                    type: string
+                required:
+                - path
+                - url
+                type: object
               conditions:
                 description: Conditions the latest available observations of a resource's
                   current state.
@@ -138,11 +171,21 @@ spec:
                   - type
                   type: object
                 type: array
+              lastHandledReconcileAt:
+                description: LastHandledReconcileAt holds the value of the most recent
+                  reconcile request value, so a change of the annotation value can
+                  be detected.
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the 'Generation' of the resource
                   that was last processed by the controller.
                 format: int64
                 type: integer
+              url:
+                description: URL is the dynamic fetch link for the latest Artifact.
+                  It is provided on a "best effort" basis, and using the precise GitRepositoryStatus.Artifact
+                  data is recommended.
+                type: string
             type: object
         type: object
     served: true

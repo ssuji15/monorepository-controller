@@ -25,6 +25,7 @@ import (
 	"dies.dev/apis/meta/v1"
 	json "encoding/json"
 	fmtx "fmt"
+	meta "github.com/fluxcd/pkg/apis/meta"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
 	apis "github.com/vmware-labs/reconciler-runtime/apis"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -441,9 +442,9 @@ func (d *FilterSpecDie) DeepCopy() *FilterSpecDie {
 	}
 }
 
-func (d *FilterSpecDie) Include(v ...v1alpha1.Source) *FilterSpecDie {
+func (d *FilterSpecDie) SourceRef(v v1alpha1.SourceRef) *FilterSpecDie {
 	return d.DieStamp(func(r *v1alpha1.FilterSpec) {
-		r.Include = v
+		r.SourceRef = v
 	})
 }
 
@@ -604,5 +605,25 @@ func (d *FilterStatusDie) DeepCopy() *FilterStatusDie {
 func (d *FilterStatusDie) Status(v apis.Status) *FilterStatusDie {
 	return d.DieStamp(func(r *v1alpha1.FilterStatus) {
 		r.Status = v
+	})
+}
+
+// URL is the dynamic fetch link for the latest Artifact. It is provided on a "best effort" basis, and using the precise GitRepositoryStatus.Artifact data is recommended.
+func (d *FilterStatusDie) URL(v string) *FilterStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilterStatus) {
+		r.URL = v
+	})
+}
+
+// Artifact represents the last successful GitRepository reconciliation.
+func (d *FilterStatusDie) Artifact(v *v1alpha1.Artifact) *FilterStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilterStatus) {
+		r.Artifact = v
+	})
+}
+
+func (d *FilterStatusDie) ReconcileRequestStatus(v meta.ReconcileRequestStatus) *FilterStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilterStatus) {
+		r.ReconcileRequestStatus = v
 	})
 }
