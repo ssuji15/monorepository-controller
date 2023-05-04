@@ -6,7 +6,7 @@ metadata:
   namespace: default
 spec:
   interval: 5m
-  url: https://github.com/dapdelivery/where-for-dinner-app
+  url: https://github.com/garethjevans/where-for-dinner
   ref:
     branch: main
 ---

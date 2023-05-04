@@ -6,9 +6,13 @@ import (
 )
 
 const (
-	FilteredRepositoryConditionReady     = apis.ConditionReady
+	FilteredRepositoryConditionReady = apis.ConditionReady
+
 	FilteredRepositorySourceMapping      = "FilteredRepositorySourceMapping"
 	FilteredRepositoryNoSuchSourceReason = "NoSuchSource"
+
+	FilteredRepositoryArtifactResolved       = "FilteredRepositoryArtifactResolved"
+	FilteredRepositoryArtifactResolvedReason = "Resolved"
 
 	FilteredRepositorySucceededReason = "Succeeded"
 	FilteredRepositoryFailedReason    = "Failed"
@@ -26,6 +30,14 @@ func (b *FilteredRepositoryStatus) MarkResourceMissing(resource string, componen
 	message := fmt.Sprintf(template, resource, component, namespace)
 
 	containerCondSet.Manage(b).MarkFalse(FilteredRepositorySourceMapping, FilteredRepositoryNoSuchSourceReason, message)
+}
+
+func (b *FilteredRepositoryStatus) MarkArtifactResolved(url string) {
+	template := "resolved artifact from url %s"
+
+	message := fmt.Sprintf(template, url)
+
+	containerCondSet.Manage(b).MarkFalse(FilteredRepositoryArtifactResolved, FilteredRepositoryArtifactResolvedReason, message)
 }
 
 func (b *FilteredRepositoryStatus) MarkFailed(err error) {

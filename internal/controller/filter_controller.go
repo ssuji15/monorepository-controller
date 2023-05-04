@@ -46,9 +46,48 @@ func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.Resource
 	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
 		Name: "FilteredRepository",
 		Reconciler: reconcilers.Sequence[*v1alpha1.FilteredRepository]{
+			NewResourceValidator(c),
 			NewChecksumCalculator(c),
 		},
 		Config: c,
+	}
+}
+
+func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
+	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
+		Name: "ResourceValidator",
+		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
+			// resolve the input
+			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
+
+			component := GetKind(resource.Spec.SourceRef.Kind)
+
+			err := c.Client.Get(ctx, key, component)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					logrus.Warnf("unable to resolve %s", key)
+					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
+				} else {
+					logrus.Errorf("error resolving %s", key)
+					resource.Status.MarkFailed(err)
+				}
+				return nil
+			}
+
+			// parse the status
+			a, ok := component.(Artifacter)
+			if !ok {
+				logrus.Errorf("component does not have an artifact")
+			}
+
+			artifact := a.GetArtifact()
+			if artifact != nil {
+				logrus.Debugf("got artifact %+v", artifact)
+				resource.Status.MarkArtifactResolved(artifact.URL)
+			}
+
+			return nil
+		},
 	}
 }
 
@@ -89,7 +128,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 
 			artifact := a.GetArtifact()
 			if artifact != nil {
-				logrus.Infof("got artifact %+v", artifact)
+				logrus.Debugf("got artifact %+v", artifact)
 
 				// download the filter and copy from/to path
 				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
@@ -110,7 +149,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 					return err
 				}
 
-				logrus.Infof("Got files %s", files)
+				logrus.Debugf("Got files %s", files)
 
 				filteredFiles := FilterFileList(files, resource.Spec.Include)
 				logrus.Infof("Using files %s for checksum calculation", filteredFiles)
@@ -138,7 +177,6 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 						Size:           artifact.Size,
 						Metadata:       artifact.Metadata,
 					}
-
 					resource.Status.URL = artifact.URL
 				}
 
@@ -245,7 +283,7 @@ func FilterFileList(list []string, include string) []string {
 	patterns := sourceignore.ReadPatterns(strings.NewReader(include), domain)
 	matcher := sourceignore.NewDefaultMatcher(patterns, domain)
 
-	logrus.Infof("got patterns %+v", patterns)
+	logrus.Debugf("got patterns %+v", patterns)
 
 	var filtered []string
 	for _, file := range list {
