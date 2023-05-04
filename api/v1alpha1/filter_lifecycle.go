@@ -6,13 +6,17 @@ import (
 )
 
 const (
-	FilterConditionReady                       = apis.ConditionReady
-	FilterResourceMapping                      = "FilterResourceMapping"
-	FilterResourceMappingNoSuchComponentReason = "NoSuchResource"
+	FilteredRepositoryConditionReady     = apis.ConditionReady
+	FilteredRepositorySourceMapping      = "FilteredRepositorySourceMapping"
+	FilteredRepositoryNoSuchSourceReason = "NoSuchSource"
+
+	FilteredRepositorySucceededReason = "Succeeded"
+	FilteredRepositoryFailedReason    = "Failed"
 )
 
 var containerCondSet = apis.NewLivingConditionSet(
-	FilterResourceMapping,
+	FilteredRepositoryConditionReady,
+	FilteredRepositorySourceMapping,
 )
 
 func (b *FilteredRepositoryStatus) MarkResourceMissing(resource string, component string, namespace string) {
@@ -21,9 +25,13 @@ func (b *FilteredRepositoryStatus) MarkResourceMissing(resource string, componen
 
 	message := fmt.Sprintf(template, resource, component, namespace)
 
-	containerCondSet.Manage(b).MarkFalse(FilterResourceMapping, FilterResourceMappingNoSuchComponentReason, message)
+	containerCondSet.Manage(b).MarkFalse(FilteredRepositorySourceMapping, FilteredRepositoryNoSuchSourceReason, message)
 }
 
 func (b *FilteredRepositoryStatus) MarkFailed(err error) {
-	containerCondSet.Manage(b).MarkFalse(FilterConditionReady, "Failed", err.Error())
+	containerCondSet.Manage(b).MarkFalse(FilteredRepositoryConditionReady, FilteredRepositoryFailedReason, err.Error())
+}
+
+func (b *FilteredRepositoryStatus) MarkReady() {
+	containerCondSet.Manage(b).MarkTrue(FilteredRepositoryConditionReady, FilteredRepositorySucceededReason, "Repository has been successfully filtered for change")
 }

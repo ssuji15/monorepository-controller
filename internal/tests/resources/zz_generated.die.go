@@ -628,6 +628,13 @@ func (d *FilteredRepositoryStatusDie) Artifact(v *v1alpha1.Artifact) *FilteredRe
 	})
 }
 
+// ObservedInclude is the observed list of GitRepository resources used to calculate the checksum for this artifact
+func (d *FilteredRepositoryStatusDie) ObservedInclude(v string) *FilteredRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+		r.ObservedInclude = v
+	})
+}
+
 func (d *FilteredRepositoryStatusDie) ReconcileRequestStatus(v meta.ReconcileRequestStatus) *FilteredRepositoryStatusDie {
 	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
 		r.ReconcileRequestStatus = v

@@ -55,6 +55,11 @@ type FilteredRepositoryStatus struct {
 	// +optional
 	Artifact *Artifact `json:"artifact,omitempty"`
 
+	// ObservedInclude is the observed list of GitRepository resources used to
+	// calculate the checksum for this artifact
+	// +optional
+	ObservedInclude string `json:"observedInclude,omitempty"`
+
 	meta.ReconcileRequestStatus `json:",inline"`
 }
 
@@ -103,6 +108,13 @@ type Artifact struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=filteredrepo
+//+kubebuilder:printcolumn:name="Source Ref",type="string",JSONPath=`.spec.sourceRef.name`
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
+//+kubebuilder:printcolumn:name="Checksum",type="string",JSONPath=".status.artifact.checksum",description=""
+//+kubebuilder:printcolumn:name="Last Update",type="date",JSONPath=".status.artifact.lastUpdateTime",description=""
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
 // FilteredRepository is the Schema for the filter API
 type FilteredRepository struct {

@@ -12,10 +12,31 @@ spec:
     kind: FilteredRepository
     listKind: FilteredRepositoryList
     plural: filteredrepositories
+    shortNames:
+    - filteredrepo
     singular: filteredrepository
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.sourceRef.name
+      name: Source Ref
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.artifact.checksum
+      name: Checksum
+      type: string
+    - jsonPath: .status.artifact.lastUpdateTime
+      name: Last Update
+      type: date
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: FilteredRepository is the Schema for the filter API
@@ -184,6 +205,10 @@ spec:
                   that was last processed by the controller.
                 format: int64
                 type: integer
+              observedInclude:
+                description: ObservedInclude is the observed list of GitRepository
+                  resources used to calculate the checksum for this artifact
+                type: string
               url:
                 description: URL is the dynamic fetch link for the latest Artifact.
                   It is provided on a "best effort" basis, and using the precise GitRepositoryStatus.Artifact

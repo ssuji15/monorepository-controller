@@ -36,11 +36,11 @@ import (
 	"strings"
 )
 
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filters/finalizers,verbs=update
-
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/finalizers,verbs=update
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories;gitrepositories;ocirepositories,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=events,verbs=patch
 
 func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository] {
 	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
@@ -115,6 +115,35 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 				filteredFiles := FilterFileList(files, resource.Spec.Include)
 				logrus.Infof("Using files %s for checksum calculation", filteredFiles)
 
+				hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
+					return os.Open(filepath.Join(tarGzExtractedLocation, name))
+				})
+
+				if err != nil {
+					return err
+				}
+				logrus.Infof("Calculated checksum %s", hash)
+
+				if resource.Status.Artifact != nil && resource.Status.Artifact.Checksum == hash {
+					// nothing has changed, do nothing
+					logrus.Infof("Resource hasn't changed")
+				} else {
+					resource.Status.Artifact = &v1alpha1.Artifact{
+						Path:           artifact.Path,
+						URL:            artifact.URL,
+						Revision:       artifact.Revision,
+						Checksum:       hash,
+						Digest:         artifact.Digest,
+						LastUpdateTime: artifact.LastUpdateTime,
+						Size:           artifact.Size,
+						Metadata:       artifact.Metadata,
+					}
+
+					resource.Status.URL = artifact.URL
+				}
+
+				resource.Status.ObservedInclude = resource.Spec.Include
+				resource.Status.MarkReady()
 			}
 
 			return nil

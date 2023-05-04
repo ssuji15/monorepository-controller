@@ -6,9 +6,15 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - patch
+- apiGroups:
   - source.garethjevans.org
   resources:
-  - filters
+  - filteredrepositories
   verbs:
   - create
   - delete
@@ -20,13 +26,13 @@ rules:
 - apiGroups:
   - source.garethjevans.org
   resources:
-  - filters/finalizers
+  - filteredrepositories/finalizers
   verbs:
   - update
 - apiGroups:
   - source.garethjevans.org
   resources:
-  - filters/status
+  - filteredrepositories/status
   verbs:
   - get
   - patch
