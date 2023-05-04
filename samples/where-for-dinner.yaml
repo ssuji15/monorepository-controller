@@ -1,0 +1,123 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: where-for-dinner
+  namespace: default
+spec:
+  interval: 5m
+  url: https://github.com/dapdelivery/where-for-dinner-app
+  ref:
+    branch: main
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-api-gateway
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-api-gateway
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-availability
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-availability
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-crawler
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-crawler
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-notify
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-notify
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-search-poc
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-search-poc
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-search
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-search
+    !.*
+    !**/src/test/**
+---
+apiVersion: source.garethjevans.org/v1alpha1
+kind: FilteredRepository
+metadata:
+  name: where-for-dinner-ui
+  namespace: default
+spec:
+  sourceRef:
+    apiVersion: source.toolkit.fluxcd.io/v1beta2
+    kind: GitRepository
+    name: where-for-dinner
+  include: |
+    pom.xml
+    where-for-dinner-ui
+    !.*
+    !**/src/test/**

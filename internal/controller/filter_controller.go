@@ -40,7 +40,7 @@ import (
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/finalizers,verbs=update
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories;gitrepositories;ocirepositories,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=events,verbs=patch
+//+kubebuilder:rbac:groups="",resources=events,verbs=patch;create;update
 
 func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository] {
 	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
