@@ -22,7 +22,9 @@ func TestFilter(t *testing.T) {
 go.*
 internal/**/*.go
 api
-!.*`
+!.*
+!**/*_test.go
+!**/tests`
 
 	filtered, err := FilterFileList(files, include)
 	assert.NoError(t, err)

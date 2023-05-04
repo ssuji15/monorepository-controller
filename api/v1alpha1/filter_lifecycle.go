@@ -15,7 +15,7 @@ var containerCondSet = apis.NewLivingConditionSet(
 	FilterResourceMapping,
 )
 
-func (b *FilterStatus) MarkResourceMissing(resource string, component string, namespace string) {
+func (b *FilteredRepositoryStatus) MarkResourceMissing(resource string, component string, namespace string) {
 	template := "resource `%s` missing. " +
 		"filter is trying to find resource `%s` in namespace `%s`"
 
@@ -24,6 +24,6 @@ func (b *FilterStatus) MarkResourceMissing(resource string, component string, na
 	containerCondSet.Manage(b).MarkFalse(FilterResourceMapping, FilterResourceMappingNoSuchComponentReason, message)
 }
 
-func (b *FilterStatus) MarkFailed(err error) {
+func (b *FilteredRepositoryStatus) MarkFailed(err error) {
 	containerCondSet.Manage(b).MarkFalse(FilterConditionReady, "Failed", err.Error())
 }

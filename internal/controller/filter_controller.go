@@ -42,20 +42,20 @@ import (
 
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories;gitrepositories;ocirepositories,verbs=get;list;watch
 
-func NewFilterReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.Filter] {
-	return &reconcilers.ResourceReconciler[*v1alpha1.Filter]{
-		Name: "Filter",
-		Reconciler: reconcilers.Sequence[*v1alpha1.Filter]{
+func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository] {
+	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
+		Name: "FilteredRepository",
+		Reconciler: reconcilers.Sequence[*v1alpha1.FilteredRepository]{
 			NewMixer(c),
 		},
 		Config: c,
 	}
 }
 
-func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.Filter] {
-	return &reconcilers.SyncReconciler[*v1alpha1.Filter]{
+func NewMixer(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
+	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
 		Name: "Mixer",
-		Sync: func(ctx context.Context, resource *v1alpha1.Filter) error {
+		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
 			// create a temporary directory
 			tempDir, err := os.MkdirTemp("", "tmp")
 			if err != nil {

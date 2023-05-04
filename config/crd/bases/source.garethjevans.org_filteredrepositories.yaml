@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: filters.source.garethjevans.org
+  name: filteredrepositories.source.garethjevans.org
 spec:
   group: source.garethjevans.org
   names:
-    kind: Filter
-    listKind: FilterList
-    plural: filters
-    singular: filter
+    kind: FilteredRepository
+    listKind: FilteredRepositoryList
+    plural: filteredrepositories
+    singular: filteredrepository
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Filter is the Schema for the filter API
+        description: FilteredRepository is the Schema for the filter API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,8 +33,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: FilterSpec defines the structure of the filter
+            description: FilteredRepositorySpec defines the structure of the filter
             properties:
+              include:
+                type: string
               sourceRef:
                 description: SourceRef the GVK and name of the source object
                 properties:
@@ -50,10 +52,11 @@ spec:
                 - name
                 type: object
             required:
+            - include
             - sourceRef
             type: object
           status:
-            description: FilterStatus defines the observed state of Filter
+            description: FilteredRepositoryStatus defines the observed state of FilteredRepository
             properties:
               artifact:
                 description: Artifact represents the last successful GitRepository

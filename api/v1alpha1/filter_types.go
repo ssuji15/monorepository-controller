@@ -35,13 +35,14 @@ type SourceRef struct {
 	// FIXME namespace?
 }
 
-// FilterSpec defines the structure of the filter
-type FilterSpec struct {
+// FilteredRepositorySpec defines the structure of the filter
+type FilteredRepositorySpec struct {
 	SourceRef SourceRef `json:"sourceRef"`
+	Include   string    `json:"include"`
 }
 
-// FilterStatus defines the observed state of Filter
-type FilterStatus struct {
+// FilteredRepositoryStatus defines the observed state of FilteredRepository
+type FilteredRepositoryStatus struct {
 	apis.Status `json:",inline"`
 
 	// URL is the dynamic fetch link for the latest Artifact.
@@ -103,24 +104,24 @@ type Artifact struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Filter is the Schema for the filter API
-type Filter struct {
+// FilteredRepository is the Schema for the filter API
+type FilteredRepository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   FilterSpec   `json:"spec,omitempty"`
-	Status FilterStatus `json:"status,omitempty"`
+	Spec   FilteredRepositorySpec   `json:"spec,omitempty"`
+	Status FilteredRepositoryStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// FilterList contains a list of Filter
-type FilterList struct {
+// FilteredRepositoryList contains a list of FilteredRepository
+type FilteredRepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Filter `json:"items"`
+	Items           []FilteredRepository `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Filter{}, &FilterList{})
+	SchemeBuilder.Register(&FilteredRepository{}, &FilteredRepositoryList{})
 }

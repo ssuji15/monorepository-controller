@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: garethjevans.org
   group: source
-  kind: Filter
+  kind: FilteredRepository
   path: github.com/garethjevans/filter-controller/api/v1alpha1
   version: v1alpha1
 version: "3"
