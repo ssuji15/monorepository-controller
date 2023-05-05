@@ -150,6 +150,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 
 				filteredFiles := FilterFileList(files, resource.Spec.Include)
 				log.Info("Using files for checksum calculation", "files", filteredFiles)
+				resource.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
 
 				hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
 					return os.Open(filepath.Join(tarGzExtractedLocation, name))

@@ -635,6 +635,13 @@ func (d *FilteredRepositoryStatusDie) ObservedInclude(v string) *FilteredReposit
 	})
 }
 
+// ObservedFileList is the file list used to calculate the checksum for this artifact
+func (d *FilteredRepositoryStatusDie) ObservedFileList(v string) *FilteredRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+		r.ObservedFileList = v
+	})
+}
+
 func (d *FilteredRepositoryStatusDie) ReconcileRequestStatus(v meta.ReconcileRequestStatus) *FilteredRepositoryStatusDie {
 	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
 		r.ReconcileRequestStatus = v

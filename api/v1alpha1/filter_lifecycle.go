@@ -38,7 +38,7 @@ func (b *FilteredRepositoryStatus) MarkArtifactResolved(url string) {
 
 	message := fmt.Sprintf(template, url)
 
-	containerCondSet.Manage(b).MarkFalse(FilteredRepositoryArtifactResolved, FilteredRepositoryArtifactResolvedReason, message)
+	containerCondSet.Manage(b).MarkTrue(FilteredRepositoryArtifactResolved, FilteredRepositoryArtifactResolvedReason, message)
 }
 
 func (b *FilteredRepositoryStatus) MarkFailed(err error) {

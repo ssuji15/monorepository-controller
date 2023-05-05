@@ -60,6 +60,11 @@ type FilteredRepositoryStatus struct {
 	// +optional
 	ObservedInclude string `json:"observedInclude,omitempty"`
 
+	// ObservedFileList is the file list used to
+	// calculate the checksum for this artifact
+	// +optional
+	ObservedFileList string `json:"observedFileList,omitempty"`
+
 	meta.ReconcileRequestStatus `json:",inline"`
 }
 

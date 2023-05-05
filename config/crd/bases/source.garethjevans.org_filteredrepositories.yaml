@@ -200,6 +200,10 @@ spec:
                   reconcile request value, so a change of the annotation value can
                   be detected.
                 type: string
+              observedFileList:
+                description: ObservedFileList is the file list used to calculate the
+                  checksum for this artifact
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the 'Generation' of the resource
                   that was last processed by the controller.
