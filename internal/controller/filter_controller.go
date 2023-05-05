@@ -141,7 +141,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 					return err
 				}
 
-				files, err := dirhash.DirFiles(tarGzExtractedLocation, "")
+				files, err := ListFiles(tarGzExtractedLocation)
 				if err != nil {
 					return err
 				}
@@ -289,4 +289,14 @@ func FilterFileList(list []string, include string) []string {
 	}
 
 	return filtered
+}
+
+func ListFiles(dir string) ([]string, error) {
+	return dirhash.DirFiles(dir, ".")
+}
+
+func HashFiles(list []string, dir string) (string, error) {
+	return dirhash.Hash1(list, func(name string) (io.ReadCloser, error) {
+		return os.Open(filepath.Join(dir, name))
+	})
 }

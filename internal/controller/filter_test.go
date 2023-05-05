@@ -3,15 +3,12 @@ package controller_test
 import (
 	"github.com/garethjevans/filter-controller/internal/controller"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/mod/sumdb/dirhash"
-	"io"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestFilter(t *testing.T) {
-	files, err := dirhash.DirFiles("../..", ".")
+
+	files, err := controller.ListFiles("../..")
 	assert.NoError(t, err)
 
 	t.Logf("Got files %s", files)
@@ -43,7 +40,7 @@ api
 func TestHash(t *testing.T) {
 	include := `*.txt`
 
-	files01, err := dirhash.DirFiles("testdata/dir01", ".")
+	files01, err := controller.ListFiles("testdata/dir01")
 	assert.NoError(t, err)
 
 	t.Logf("Got files %s", files01)
@@ -55,14 +52,12 @@ func TestHash(t *testing.T) {
 	assert.Equal(t, len(filtered01), 1)
 	assert.Contains(t, filtered01, "test.txt")
 
-	hash01, err := dirhash.Hash1(filtered01, func(s string) (io.ReadCloser, error) {
-		return os.Open(filepath.Join("testdata/dir01", s))
-	})
+	hash01, err := controller.HashFiles(filtered01, "testdata/dir01")
 
 	assert.NoError(t, err)
 	t.Logf("Hash %s", hash01)
 
-	files02, err := dirhash.DirFiles("testdata/dir02", ".")
+	files02, err := controller.ListFiles("testdata/dir02")
 	assert.NoError(t, err)
 
 	t.Logf("Got files %s", files02)
@@ -74,9 +69,7 @@ func TestHash(t *testing.T) {
 	assert.Equal(t, len(filtered02), 1)
 	assert.Contains(t, filtered02, "test.txt")
 
-	hash02, err := dirhash.Hash1(filtered02, func(s string) (io.ReadCloser, error) {
-		return os.Open(filepath.Join("testdata/dir02", s))
-	})
+	hash02, err := controller.HashFiles(filtered02, "testdata/dir02")
 
 	assert.NoError(t, err)
 	t.Logf("Hash %s", hash02)
