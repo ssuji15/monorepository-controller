@@ -21,6 +21,7 @@ const (
 var containerCondSet = apis.NewLivingConditionSet(
 	FilteredRepositoryConditionReady,
 	FilteredRepositorySourceMapping,
+	FilteredRepositoryArtifactResolved,
 )
 
 func (b *FilteredRepositoryStatus) MarkResourceMissing(resource string, component string, namespace string) {

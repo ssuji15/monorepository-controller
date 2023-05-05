@@ -24,7 +24,7 @@ import (
 	"github.com/fluxcd/pkg/sourceignore"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
-	"github.com/sirupsen/logrus"
+	"github.com/garethjevans/filter-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
 	"io"
@@ -57,6 +57,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
 		Name: "ResourceValidator",
 		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
+			log := util.L(ctx)
 			// resolve the input
 			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
 
@@ -65,10 +66,10 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			err := c.Client.Get(ctx, key, component)
 			if err != nil {
 				if errors.IsNotFound(err) {
-					logrus.Warnf("unable to resolve %s", key)
+					log.Info("unable to resolve", "key", key)
 					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
 				} else {
-					logrus.Errorf("error resolving %s", key)
+					log.Error(err, "error resolving", "key", key)
 					resource.Status.MarkFailed(err)
 				}
 				return nil
@@ -77,13 +78,15 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			// parse the status
 			a, ok := component.(Artifacter)
 			if !ok {
-				logrus.Errorf("component does not have an artifact")
+				log.Info("component does not have an artifact")
 			}
 
 			artifact := a.GetArtifact()
 			if artifact != nil {
-				logrus.Debugf("got artifact %+v", artifact)
+				log.Info("got", "artifact", artifact)
 				resource.Status.MarkArtifactResolved(artifact.URL)
+
+				stashArtifact(ctx, artifact)
 			}
 
 			return nil
@@ -91,44 +94,38 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 	}
 }
 
+const artifactKey reconcilers.StashKey = "artifact"
+
+func stashArtifact(ctx context.Context, artifact *apiv1beta2.Artifact) {
+	reconcilers.StashValue(ctx, artifactKey, artifact)
+}
+
+func retreiveArtifact(ctx context.Context) *apiv1beta2.Artifact {
+	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(*apiv1beta2.Artifact); ok {
+		return components
+	}
+
+	return nil
+}
+
 func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
 	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
 		Name: "ChecksumCalculator",
 		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
-			// create a temporary directory
-			tempDir, err := os.MkdirTemp("", "tmp")
-			if err != nil {
-				return err
-			}
+			log := util.L(ctx)
 
-			logrus.Infof("creating temp dir %s", tempDir)
-
-			// resolve the input
-			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
-
-			component := GetKind(resource.Spec.SourceRef.Kind)
-
-			err = c.Client.Get(ctx, key, component)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					logrus.Warnf("unable to resolve %s", key)
-					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
-				} else {
-					logrus.Errorf("error resolving %s", key)
-					resource.Status.MarkFailed(err)
-				}
-				return nil
-			}
-
-			// parse the status
-			a, ok := component.(Artifacter)
-			if !ok {
-				logrus.Errorf("component does not have an artifact")
-			}
-
-			artifact := a.GetArtifact()
+			artifact := retreiveArtifact(ctx)
 			if artifact != nil {
-				logrus.Debugf("got artifact %+v", artifact)
+				// create a temporary directory
+				tempDir, err := os.MkdirTemp("", "tmp")
+				if err != nil {
+					return err
+				}
+
+				// cleanup on exit
+				defer os.RemoveAll(tempDir)
+
+				log.Info("created temp dir", "dir", tempDir)
 
 				// download the filter and copy from/to path
 				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
@@ -149,23 +146,26 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 					return err
 				}
 
-				logrus.Debugf("Got files %s", files)
+				log.Info("Full file list", "files", files)
 
 				filteredFiles := FilterFileList(files, resource.Spec.Include)
-				logrus.Infof("Using files %s for checksum calculation", filteredFiles)
+				log.Info("Using files for checksum calculation", "files", filteredFiles)
 
 				hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
 					return os.Open(filepath.Join(tarGzExtractedLocation, name))
 				})
-
 				if err != nil {
 					return err
 				}
-				logrus.Infof("Calculated checksum %s", hash)
+
+				log.Info("Calculated checksum", "checksum", hash)
 
 				if resource.Status.Artifact != nil && resource.Status.Artifact.Checksum == hash {
 					// nothing has changed, do nothing
-					logrus.Infof("Resource hasn't changed")
+					log.Info("Source hasn't changed, there is nothing to update",
+						"name", resource.Spec.SourceRef.Name,
+						"kind", resource.Spec.SourceRef.Kind,
+						"apiVersion", resource.Spec.SourceRef.ApiVersion)
 				} else {
 					resource.Status.Artifact = &v1alpha1.Artifact{
 						Path:           artifact.Path,
@@ -209,8 +209,6 @@ var _ Artifacter = (*apiv1beta2.HelmRepository)(nil)
 // DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
 func DownloadFile(filepath string, url string) error {
-	logrus.Infof("Downloading %s to %s", url, filepath)
-
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
@@ -231,8 +229,6 @@ func DownloadFile(filepath string, url string) error {
 }
 
 func ExtractTarGz(tarGzPath string, dir string) error {
-	logrus.Infof("Extracting %s to %s", tarGzPath, dir)
-
 	r, err := os.Open(tarGzPath)
 	if err != nil {
 		return err
@@ -283,12 +279,8 @@ func FilterFileList(list []string, include string) []string {
 	patterns := sourceignore.ReadPatterns(strings.NewReader(include), domain)
 	matcher := sourceignore.NewDefaultMatcher(patterns, domain)
 
-	logrus.Debugf("got patterns %+v", patterns)
-
 	var filtered []string
 	for _, file := range list {
-		logrus.Debugf("checking %s", file)
-
 		fileParts := strings.Split(file, string(filepath.Separator))
 
 		if matcher.Match(fileParts, false) {

@@ -164,6 +164,10 @@ diegen: $(DIEGEN)
 $(DIEGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install dies.dev/diegen
 
+.PHONY: restart-controller
+restart-controller:
+	kubectl get pods -n filter-system | grep -v NAME | awk '{print $$1}' | xargs kubectl delete pod -n filter-system
+
 .PHONY: flux
 flux: ## Install fluxcd on the cluster
 	kubectl apply -f hack/flux/rbac.yaml
