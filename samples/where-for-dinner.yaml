@@ -21,8 +21,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-api-gateway
+    /pom.xml
+    /where-for-dinner-api-gateway
     !.*
     !**/src/test/**
 ---
@@ -37,8 +37,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-availability
+    /pom.xml
+    /where-for-dinner-availability
     !.*
     !**/src/test/**
 ---
@@ -53,8 +53,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-crawler
+    /pom.xml
+    /where-for-dinner-crawler
     !.*
     !**/src/test/**
 ---
@@ -69,8 +69,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-notify
+    /pom.xml
+    /where-for-dinner-notify
     !.*
     !**/src/test/**
 ---
@@ -85,8 +85,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-search-poc
+    /pom.xml
+    /where-for-dinner-search-poc
     !.*
     !**/src/test/**
 ---
@@ -101,8 +101,8 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-search
+    /pom.xml
+    /where-for-dinner-search
     !.*
     !**/src/test/**
 ---
@@ -117,7 +117,7 @@ spec:
     kind: GitRepository
     name: where-for-dinner
   include: |
-    pom.xml
-    where-for-dinner-ui
+    /pom.xml
+    /where-for-dinner-ui
     !.*
     !**/src/test/**

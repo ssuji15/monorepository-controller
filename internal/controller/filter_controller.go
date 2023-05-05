@@ -167,6 +167,14 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 						"kind", resource.Spec.SourceRef.Kind,
 						"apiVersion", resource.Spec.SourceRef.ApiVersion)
 				} else {
+					old := "<NA>"
+					if resource.Status.Artifact != nil {
+						old = resource.Status.Artifact.Checksum
+					}
+
+					log.Info("Source has changed! updating status with new checksum",
+						"checksum", hash,
+						"old", old)
 					resource.Status.Artifact = &v1alpha1.Artifact{
 						Path:           artifact.Path,
 						URL:            artifact.URL,
