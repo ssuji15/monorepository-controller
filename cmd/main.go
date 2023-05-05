@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/fluxcd/source-controller/api/v1beta2"
 	"os"
 	"time"
@@ -46,9 +47,9 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	//utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	// flux
+	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1beta2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

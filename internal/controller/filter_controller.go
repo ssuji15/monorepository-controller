@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fluxcd/pkg/sourceignore"
+	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
 	"github.com/garethjevans/filter-controller/internal/util"
@@ -61,7 +62,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			// resolve the input
 			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
 
-			component := GetKind(resource.Spec.SourceRef.Kind)
+			component := GetKind(resource.Spec.SourceRef.ApiVersion, resource.Spec.SourceRef.Kind)
 
 			err := c.Client.Get(ctx, key, component)
 			if err != nil {
@@ -198,12 +199,27 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 	}
 }
 
-func GetKind(kind string) client.Object {
-	if kind == "OCIRepository" {
-		return &apiv1beta2.OCIRepository{}
-	} else if kind == "HelmRepository" {
-		return &apiv1beta2.HelmRepository{}
+func GetKind(apiVersion string, kind string) client.Object {
+	type match struct {
+		kind       string
+		apiVersion string
 	}
+
+	in := match{apiVersion: apiVersion, kind: kind}
+
+	switch in {
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "OCIRepository"}:
+		return &apiv1beta2.OCIRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "HelmRepository"}:
+		return &apiv1beta2.HelmRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "GitRepository"}:
+		return &apiv1beta2.GitRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "HelmRepository"}:
+		return &apiv1beta1.HelmRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
+		return &apiv1beta1.GitRepository{}
+	}
+
 	return &apiv1beta2.GitRepository{}
 }
 
