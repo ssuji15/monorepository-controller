@@ -36,7 +36,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	v1alpha1 "github.com/garethjevans/filter-controller/api/v1alpha1"
+	sourcev1alpha1 "github.com/garethjevans/filter-controller/api/source/v1alpha1"
+	"github.com/garethjevans/filter-controller/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -51,6 +52,8 @@ func init() {
 	// flux
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1beta2.AddToScheme(scheme))
+	// tanzu source controller
+	utilruntime.Must(sourcev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

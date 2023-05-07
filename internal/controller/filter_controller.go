@@ -17,20 +17,17 @@ limitations under the License.
 package controller
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"github.com/fluxcd/pkg/sourceignore"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1alpha1 "github.com/garethjevans/filter-controller/api/source/v1alpha1"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
 	"github.com/garethjevans/filter-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -77,18 +74,16 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			}
 
 			// parse the status
-			a, ok := component.(Artifacter)
-			if !ok {
-				log.Info("component does not have an artifact")
+			artifact, err := GetArtifact(component)
+			if err != nil {
+				log.Error(err, "error finding artifact", "key", key)
+				resource.Status.MarkFailed(err)
 			}
 
-			artifact := a.GetArtifact()
-			if artifact != nil {
-				log.Info("got", "artifact", artifact)
-				resource.Status.MarkArtifactResolved(artifact.URL)
+			log.Info("got", "artifact", artifact)
+			resource.Status.MarkArtifactResolved(artifact.URL)
 
-				stashArtifact(ctx, artifact)
-			}
+			stashArtifact(ctx, artifact)
 
 			return nil
 		},
@@ -97,16 +92,16 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 
 const artifactKey reconcilers.StashKey = "artifact"
 
-func stashArtifact(ctx context.Context, artifact *apiv1beta2.Artifact) {
+func stashArtifact(ctx context.Context, artifact v1alpha1.Artifact) {
 	reconcilers.StashValue(ctx, artifactKey, artifact)
 }
 
-func retreiveArtifact(ctx context.Context) *apiv1beta2.Artifact {
-	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(*apiv1beta2.Artifact); ok {
+func retreiveArtifact(ctx context.Context) v1alpha1.Artifact {
+	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(v1alpha1.Artifact); ok {
 		return components
 	}
 
-	return nil
+	return v1alpha1.Artifact{}
 }
 
 func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
@@ -116,7 +111,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 			log := util.L(ctx)
 
 			artifact := retreiveArtifact(ctx)
-			if artifact != nil {
+			if artifact.URL != "" {
 				// create a temporary directory
 				tempDir, err := os.MkdirTemp("", "tmp")
 				if err != nil {
@@ -218,110 +213,71 @@ func GetKind(apiVersion string, kind string) client.Object {
 		return &apiv1beta1.HelmRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
 		return &apiv1beta1.GitRepository{}
+	case match{apiVersion: "source.apps.tanzu.vmware.com/v1alpha1", kind: "ImageRepository"}:
+		return &sourcev1alpha1.ImageRepository{}
 	}
 
 	return &apiv1beta2.GitRepository{}
 }
 
-type Artifacter interface {
-	GetArtifact() *apiv1beta2.Artifact
-}
-
-var _ Artifacter = (*apiv1beta2.GitRepository)(nil)
-var _ Artifacter = (*apiv1beta2.OCIRepository)(nil)
-var _ Artifacter = (*apiv1beta2.HelmRepository)(nil)
-
-// DownloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func DownloadFile(filepath string, url string) error {
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
+func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
+	switch v := in.(type) {
+	case apiv1beta2.OCIRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Size:           v.GetArtifact().Size,
+			Checksum:       v.GetArtifact().Checksum,
+			Digest:         v.GetArtifact().Digest,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
+	case apiv1beta2.GitRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Size:           v.GetArtifact().Size,
+			Checksum:       v.GetArtifact().Checksum,
+			Digest:         v.GetArtifact().Digest,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
+	case apiv1beta2.HelmRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Size:           v.GetArtifact().Size,
+			Checksum:       v.GetArtifact().Checksum,
+			Digest:         v.GetArtifact().Digest,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
+	case apiv1beta1.GitRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Checksum:       v.GetArtifact().Checksum,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
+	case apiv1beta1.HelmRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Checksum:       v.GetArtifact().Checksum,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
+	case sourcev1alpha1.ImageRepository:
+		return v1alpha1.Artifact{
+			URL:            v.Status.Artifact.URL,
+			Path:           v.Status.Artifact.Path,
+			Revision:       v.Status.Artifact.Revision,
+			Checksum:       v.Status.Artifact.Checksum,
+			LastUpdateTime: v.Status.Artifact.LastUpdateTime,
+		}, nil
+	default:
+		return v1alpha1.Artifact{}, fmt.Errorf("unknown type %s", v)
 	}
-	defer resp.Body.Close()
-
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
-func ExtractTarGz(tarGzPath string, dir string) error {
-	r, err := os.Open(tarGzPath)
-	if err != nil {
-		return err
-	}
-
-	uncompressedStream, err := gzip.NewReader(r)
-	if err != nil {
-		return err
-	}
-
-	tarReader := tar.NewReader(uncompressedStream)
-
-	for true {
-		header, err := tarReader.Next()
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if err := os.Mkdir(filepath.Join(dir, header.Name), 0755); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			outFile, err := os.Create(filepath.Join(dir, header.Name))
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(outFile, tarReader); err != nil {
-				return err
-			}
-			outFile.Close()
-
-		default:
-			return err
-		}
-	}
-	return nil
-}
-
-func FilterFileList(list []string, include string) []string {
-	var domain []string
-	patterns := sourceignore.ReadPatterns(strings.NewReader(include), domain)
-	matcher := sourceignore.NewDefaultMatcher(patterns, domain)
-
-	var filtered []string
-	for _, file := range list {
-		fileParts := strings.Split(file, string(filepath.Separator))
-
-		if matcher.Match(fileParts, false) {
-			filtered = append(filtered, file)
-		}
-	}
-
-	return filtered
-}
-
-func ListFiles(dir string) ([]string, error) {
-	return dirhash.DirFiles(dir, ".")
-}
-
-func HashFiles(list []string, dir string) (string, error) {
-	return dirhash.Hash1(list, func(name string) (io.ReadCloser, error) {
-		return os.Open(filepath.Join(dir, name))
-	})
+	return v1alpha1.Artifact{}, fmt.Errorf("unknown type")
 }
