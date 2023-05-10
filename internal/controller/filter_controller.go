@@ -64,10 +64,10 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			err := c.Client.Get(ctx, key, component)
 			if err != nil {
 				if errors.IsNotFound(err) {
-					log.Info("unable to resolve", "key", key)
+					log.Info("unable to resolve", "name", key.Name, "namespace", key.Namespace)
 					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
 				} else {
-					log.Error(err, "error resolving", "key", key)
+					log.Error(err, "error resolving", "name", key.Name, "namespace", key.Namespace)
 					resource.Status.MarkFailed(err)
 				}
 				return nil
@@ -76,7 +76,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			// parse the status
 			artifact, err := GetArtifact(component)
 			if err != nil {
-				log.Error(err, "error finding artifact", "key", key)
+				log.Error(err, "error finding artifact", "name", key.Name, "namespace", key.Namespace)
 				resource.Status.MarkFailed(err)
 			}
 
@@ -222,7 +222,7 @@ func GetKind(apiVersion string, kind string) client.Object {
 
 func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 	switch v := in.(type) {
-	case apiv1beta2.OCIRepository:
+	case *apiv1beta2.OCIRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -232,7 +232,7 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
-	case apiv1beta2.GitRepository:
+	case *apiv1beta2.GitRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -242,7 +242,7 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
-	case apiv1beta2.HelmRepository:
+	case *apiv1beta2.HelmRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -252,7 +252,7 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
-	case apiv1beta1.GitRepository:
+	case *apiv1beta1.GitRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -260,7 +260,7 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Checksum:       v.GetArtifact().Checksum,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
-	case apiv1beta1.HelmRepository:
+	case *apiv1beta1.HelmRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -268,7 +268,7 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Checksum:       v.GetArtifact().Checksum,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
-	case sourcev1alpha1.ImageRepository:
+	case *sourcev1alpha1.ImageRepository:
 		return v1alpha1.Artifact{
 			URL:            v.Status.Artifact.URL,
 			Path:           v.Status.Artifact.Path,

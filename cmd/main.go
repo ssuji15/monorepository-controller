@@ -48,6 +48,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	// filtered repository
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	// flux
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
