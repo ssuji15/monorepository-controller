@@ -96,7 +96,7 @@ func stashArtifact(ctx context.Context, artifact v1alpha1.Artifact) {
 	reconcilers.StashValue(ctx, artifactKey, artifact)
 }
 
-func retreiveArtifact(ctx context.Context) v1alpha1.Artifact {
+func retrieveArtifact(ctx context.Context) v1alpha1.Artifact {
 	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(v1alpha1.Artifact); ok {
 		return components
 	}
@@ -110,7 +110,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
 			log := util.L(ctx)
 
-			artifact := retreiveArtifact(ctx)
+			artifact := retrieveArtifact(ctx)
 			if artifact.URL != "" {
 				// create a temporary directory
 				tempDir, err := os.MkdirTemp("", "tmp")
