@@ -41,8 +41,8 @@ github.com/fluxcd/go-git/v5 v5.0.0-20221219190809-2e5c9d01cfc4 h1:Gm5sGGk+/Wq6Rh
 github.com/fluxcd/go-git/v5 v5.0.0-20221219190809-2e5c9d01cfc4/go.mod h1:raWgfUV7lDQVXp4QXUaeNNJkRVKz97UQuF+0kdY7Vmo=
 github.com/fluxcd/pkg/apis/acl v0.1.0 h1:EoAl377hDQYL3WqanWCdifauXqXbMyFuK82NnX6pH4Q=
 github.com/fluxcd/pkg/apis/acl v0.1.0/go.mod h1:zfEZzz169Oap034EsDhmCAGgnWlcWmIObZjYMusoXS8=
-github.com/fluxcd/pkg/apis/meta v1.0.0 h1:i9IGHd/VNEZELX7mepkiYFbJxs2J5znaB4cN9z2nPm8=
-github.com/fluxcd/pkg/apis/meta v1.0.0/go.mod h1:04ZdpZYm1x+aL93K4daNHW1UX6E8K7Gyf5za9OhrE+U=
+github.com/fluxcd/pkg/apis/meta v1.1.0 h1:vYU1mvUzztnQyTzZOLHQ3wm/tXd7E1QZ2V91zuVJPsQ=
+github.com/fluxcd/pkg/apis/meta v1.1.0/go.mod h1:/QwCotRKL/BT6RSa4O75FlYW14fU8eRfKnoagzbkmL4=
 github.com/fluxcd/pkg/sourceignore v0.3.3 h1:Ue29JAuPECEYdvIqdpXpQaDxpeySn7amarLArp7XoIs=
 github.com/fluxcd/pkg/sourceignore v0.3.3/go.mod h1:yuJzKggph0Bdbk9LgXjJQhvJZSTJV/1vS7mJuB7mPa0=
 github.com/fluxcd/source-controller/api v0.36.1 h1:/ul69kJNEwrFG1Cwk2P/GwgraIxOETCL+tP+zMtxTu8=
