@@ -9,7 +9,7 @@ require (
 	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.9.5
-	github.com/onsi/gomega v1.27.6
+	github.com/onsi/gomega v1.27.7
 	github.com/stretchr/testify v1.8.3
 	github.com/vmware-labs/reconciler-runtime v0.12.0-alpha.0
 	golang.org/x/mod v0.10.0
