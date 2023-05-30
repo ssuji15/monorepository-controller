@@ -36,8 +36,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	sourcev1alpha1 "github.com/garethjevans/filter-controller/api/source/v1alpha1"
 	"github.com/garethjevans/filter-controller/api/v1alpha1"
+	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
