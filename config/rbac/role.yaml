@@ -16,7 +16,7 @@ rules:
 - apiGroups:
   - source.garethjevans.org
   resources:
-  - filteredrepositories
+  - monorepositories
   verbs:
   - create
   - delete
@@ -28,13 +28,13 @@ rules:
 - apiGroups:
   - source.garethjevans.org
   resources:
-  - filteredrepositories/finalizers
+  - monorepositories/finalizers
   verbs:
   - update
 - apiGroups:
   - source.garethjevans.org
   resources:
-  - filteredrepositories/status
+  - monorepositories/status
   verbs:
   - get
   - patch

@@ -5,36 +5,41 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: imagerepositories.source.apps.tanzu.vmware.com
+  name: monorepositories.source.garethjevans.org
 spec:
-  group: source.apps.tanzu.vmware.com
+  group: source.garethjevans.org
   names:
-    kind: ImageRepository
-    listKind: ImageRepositoryList
-    plural: imagerepositories
-    singular: imagerepository
+    kind: MonoRepository
+    listKind: MonoRepositoryList
+    plural: monorepositories
+    shortNames:
+    - monorepo
+    singular: monorepository
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.image
-      name: Image
-      type: string
-    - jsonPath: .status.artifact.url
-      name: URL
-      type: string
-    - jsonPath: .status.conditions[?(@.type=="Ready")].status
-      name: Ready
-      type: string
-    - jsonPath: .status.conditions[?(@.type=="Ready")].reason
-      name: Reason
+    - jsonPath: .spec.sourceRef.name
+      name: Source Ref
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .status.artifact.checksum
+      name: Checksum
+      type: string
+    - jsonPath: .status.artifact.lastUpdateTime
+      name: Last Update
+      type: date
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].message
+      name: Status
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ImageRepository is the Schema for the imagerepositories API
+        description: MonoRepository is the Schema for the filter API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,61 +54,72 @@ spec:
           metadata:
             type: object
           spec:
-            description: ImageRepositorySpec defines the desired state of ImageRepository
+            description: MonoRepositorySpec defines the structure of the filter
             properties:
-              image:
-                description: Image is a reference to an image in a remote repository
+              include:
                 type: string
-              imagePullSecrets:
-                description: ImagePullSecrets contains the names of the Kubernetes
-                  Secrets containing registry login information to resolve image metadata.
-                items:
-                  description: LocalObjectReference contains enough information to
-                    let you locate the referenced object inside the same namespace.
-                  properties:
-                    name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Add other useful fields. apiVersion, kind, uid?'
-                      type: string
-                  type: object
-                  x-kubernetes-map-type: atomic
-                type: array
-              interval:
-                description: The interval at which to check for repository updates.
-                type: string
-              serviceAccountName:
-                description: 'ServiceAccountName is the name of the Kubernetes ServiceAccount
-                  used to authenticate the image pull if the service account has attached
-                  pull secrets. For more information: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account'
-                type: string
+              sourceRef:
+                description: SourceRef the GVK and name of the source object
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                type: object
             required:
-            - image
+            - include
+            - sourceRef
             type: object
           status:
-            description: ImageRepositoryStatus defines the observed state of ImageRepository
+            description: MonoRepositoryStatus defines the observed state of MonoRepository
             properties:
               artifact:
-                description: Artifact represents the output of the last successful
-                  repository sync.
+                description: Artifact represents the last successful GitRepository
+                  reconciliation.
                 properties:
                   checksum:
-                    description: Checksum is the SHA1 checksum of the artifact.
+                    description: 'Checksum is the SHA256 checksum of the Artifact
+                      file. Deprecated: use Artifact.Digest instead.'
+                    type: string
+                  digest:
+                    description: Digest is the digest of the file in the form of '<algorithm>:<checksum>'.
+                    pattern: ^[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+$
                     type: string
                   lastUpdateTime:
                     description: LastUpdateTime is the timestamp corresponding to
-                      the last update of this artifact.
+                      the last update of the Artifact.
                     format: date-time
                     type: string
+                  metadata:
+                    additionalProperties:
+                      type: string
+                    description: Metadata holds upstream information such as OCI annotations.
+                    type: object
                   path:
-                    description: Path is the relative file path of this artifact.
+                    description: Path is the relative file path of the Artifact. It
+                      can be used to locate the file in the root of the Artifact storage
+                      on the local file system of the controller managing the Source.
                     type: string
                   revision:
-                    description: Revision is a human readable identifier traceable
+                    description: Revision is a human-readable identifier traceable
                       in the origin source system. It can be a Git commit SHA, Git
-                      tag, a Helm index timestamp, a Helm chart version, etc.
+                      tag, a Helm chart version, etc.
                     type: string
+                  size:
+                    description: Size is the number of bytes in the file.
+                    format: int64
+                    type: integer
                   url:
-                    description: URL is the HTTP address of this artifact.
+                    description: URL is the HTTP address of the Artifact as exposed
+                      by the controller managing the Source. It can be used to retrieve
+                      the Artifact for consumption, e.g. by another controller applying
+                      the Artifact contents.
                     type: string
                 required:
                 - path
@@ -179,14 +195,28 @@ spec:
                   - type
                   type: object
                 type: array
+              lastHandledReconcileAt:
+                description: LastHandledReconcileAt holds the value of the most recent
+                  reconcile request value, so a change of the annotation value can
+                  be detected.
+                type: string
+              observedFileList:
+                description: ObservedFileList is the file list used to calculate the
+                  checksum for this artifact
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the 'Generation' of the resource
                   that was last processed by the controller.
                 format: int64
                 type: integer
+              observedInclude:
+                description: ObservedInclude is the observed list of GitRepository
+                  resources used to calculate the checksum for this artifact
+                type: string
               url:
-                description: URL is the download link for the artifact output of the
-                  last repository sync.
+                description: URL is the dynamic fetch link for the latest Artifact.
+                  It is provided on a "best effort" basis, and using the precise GitRepositoryStatus.Artifact
+                  data is recommended.
                 type: string
             type: object
         type: object

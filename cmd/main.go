@@ -101,8 +101,8 @@ func main() {
 
 	ctx := ctrl.SetupSignalHandler()
 
-	if err = controller.NewFilteredRepositoryReconciler(
-		reconcilers.NewConfig(mgr, &v1alpha1.FilteredRepository{}, 5*time.Minute),
+	if err = controller.NewMonoRepositoryReconciler(
+		reconcilers.NewConfig(mgr, &v1alpha1.MonoRepository{}, 5*time.Minute),
 	).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Filter")
 		os.Exit(1)

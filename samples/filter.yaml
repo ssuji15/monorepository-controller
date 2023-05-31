@@ -11,7 +11,7 @@ spec:
     branch: main
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: foo-app-source
   namespace: default

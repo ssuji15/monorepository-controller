@@ -37,16 +37,16 @@ import (
 	yaml "sigs.k8s.io/yaml"
 )
 
-var FilteredRepositoryBlank = (&FilteredRepositoryDie{}).DieFeed(v1alpha1.FilteredRepository{})
+var MonoRepositoryBlank = (&MonoRepositoryDie{}).DieFeed(v1alpha1.MonoRepository{})
 
-type FilteredRepositoryDie struct {
+type MonoRepositoryDie struct {
 	v1.FrozenObjectMeta
 	mutable bool
-	r       v1alpha1.FilteredRepository
+	r       v1alpha1.MonoRepository
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
-func (d *FilteredRepositoryDie) DieImmutable(immutable bool) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieImmutable(immutable bool) *MonoRepositoryDie {
 	if d.mutable == !immutable {
 		return d
 	}
@@ -56,13 +56,13 @@ func (d *FilteredRepositoryDie) DieImmutable(immutable bool) *FilteredRepository
 }
 
 // DieFeed returns a new die with the provided resource.
-func (d *FilteredRepositoryDie) DieFeed(r v1alpha1.FilteredRepository) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieFeed(r v1alpha1.MonoRepository) *MonoRepositoryDie {
 	if d.mutable {
 		d.FrozenObjectMeta = v1.FreezeObjectMeta(r.ObjectMeta)
 		d.r = r
 		return d
 	}
-	return &FilteredRepositoryDie{
+	return &MonoRepositoryDie{
 		FrozenObjectMeta: v1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
@@ -70,16 +70,16 @@ func (d *FilteredRepositoryDie) DieFeed(r v1alpha1.FilteredRepository) *Filtered
 }
 
 // DieFeedPtr returns a new die with the provided resource pointer. If the resource is nil, the empty value is used instead.
-func (d *FilteredRepositoryDie) DieFeedPtr(r *v1alpha1.FilteredRepository) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieFeedPtr(r *v1alpha1.MonoRepository) *MonoRepositoryDie {
 	if r == nil {
-		r = &v1alpha1.FilteredRepository{}
+		r = &v1alpha1.MonoRepository{}
 	}
 	return d.DieFeed(*r)
 }
 
 // DieFeedJSON returns a new die with the provided JSON. Panics on error.
-func (d *FilteredRepositoryDie) DieFeedJSON(j []byte) *FilteredRepositoryDie {
-	r := v1alpha1.FilteredRepository{}
+func (d *MonoRepositoryDie) DieFeedJSON(j []byte) *MonoRepositoryDie {
+	r := v1alpha1.MonoRepository{}
 	if err := json.Unmarshal(j, &r); err != nil {
 		panic(err)
 	}
@@ -87,8 +87,8 @@ func (d *FilteredRepositoryDie) DieFeedJSON(j []byte) *FilteredRepositoryDie {
 }
 
 // DieFeedYAML returns a new die with the provided YAML. Panics on error.
-func (d *FilteredRepositoryDie) DieFeedYAML(y []byte) *FilteredRepositoryDie {
-	r := v1alpha1.FilteredRepository{}
+func (d *MonoRepositoryDie) DieFeedYAML(y []byte) *MonoRepositoryDie {
+	r := v1alpha1.MonoRepository{}
 	if err := yaml.Unmarshal(y, &r); err != nil {
 		panic(err)
 	}
@@ -96,7 +96,7 @@ func (d *FilteredRepositoryDie) DieFeedYAML(y []byte) *FilteredRepositoryDie {
 }
 
 // DieFeedYAMLFile returns a new die loading YAML from a file path. Panics on error.
-func (d *FilteredRepositoryDie) DieFeedYAMLFile(name string) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieFeedYAMLFile(name string) *MonoRepositoryDie {
 	y, err := osx.ReadFile(name)
 	if err != nil {
 		panic(err)
@@ -105,7 +105,7 @@ func (d *FilteredRepositoryDie) DieFeedYAMLFile(name string) *FilteredRepository
 }
 
 // DieFeedRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositoryDie) DieFeedRawExtension(raw runtime.RawExtension) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieFeedRawExtension(raw runtime.RawExtension) *MonoRepositoryDie {
 	j, err := json.Marshal(raw)
 	if err != nil {
 		panic(err)
@@ -114,7 +114,7 @@ func (d *FilteredRepositoryDie) DieFeedRawExtension(raw runtime.RawExtension) *F
 }
 
 // DieRelease returns the resource managed by the die.
-func (d *FilteredRepositoryDie) DieRelease() v1alpha1.FilteredRepository {
+func (d *MonoRepositoryDie) DieRelease() v1alpha1.MonoRepository {
 	if d.mutable {
 		return d.r
 	}
@@ -122,13 +122,13 @@ func (d *FilteredRepositoryDie) DieRelease() v1alpha1.FilteredRepository {
 }
 
 // DieReleasePtr returns a pointer to the resource managed by the die.
-func (d *FilteredRepositoryDie) DieReleasePtr() *v1alpha1.FilteredRepository {
+func (d *MonoRepositoryDie) DieReleasePtr() *v1alpha1.MonoRepository {
 	r := d.DieRelease()
 	return &r
 }
 
 // DieReleaseUnstructured returns the resource managed by the die as an unstructured object. Panics on error.
-func (d *FilteredRepositoryDie) DieReleaseUnstructured() *unstructured.Unstructured {
+func (d *MonoRepositoryDie) DieReleaseUnstructured() *unstructured.Unstructured {
 	r := d.DieReleasePtr()
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r)
 	if err != nil {
@@ -140,7 +140,7 @@ func (d *FilteredRepositoryDie) DieReleaseUnstructured() *unstructured.Unstructu
 }
 
 // DieReleaseJSON returns the resource managed by the die as JSON. Panics on error.
-func (d *FilteredRepositoryDie) DieReleaseJSON() []byte {
+func (d *MonoRepositoryDie) DieReleaseJSON() []byte {
 	r := d.DieReleasePtr()
 	j, err := json.Marshal(r)
 	if err != nil {
@@ -150,7 +150,7 @@ func (d *FilteredRepositoryDie) DieReleaseJSON() []byte {
 }
 
 // DieReleaseYAML returns the resource managed by the die as YAML. Panics on error.
-func (d *FilteredRepositoryDie) DieReleaseYAML() []byte {
+func (d *MonoRepositoryDie) DieReleaseYAML() []byte {
 	r := d.DieReleasePtr()
 	y, err := yaml.Marshal(r)
 	if err != nil {
@@ -160,7 +160,7 @@ func (d *FilteredRepositoryDie) DieReleaseYAML() []byte {
 }
 
 // DieReleaseRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositoryDie) DieReleaseRawExtension() runtime.RawExtension {
+func (d *MonoRepositoryDie) DieReleaseRawExtension() runtime.RawExtension {
 	j := d.DieReleaseJSON()
 	raw := runtime.RawExtension{}
 	if err := json.Unmarshal(j, &raw); err != nil {
@@ -170,7 +170,7 @@ func (d *FilteredRepositoryDie) DieReleaseRawExtension() runtime.RawExtension {
 }
 
 // DieStamp returns a new die with the resource passed to the callback function. The resource is mutable.
-func (d *FilteredRepositoryDie) DieStamp(fn func(r *v1alpha1.FilteredRepository)) *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DieStamp(fn func(r *v1alpha1.MonoRepository)) *MonoRepositoryDie {
 	r := d.DieRelease()
 	fn(&r)
 	return d.DieFeed(r)
@@ -179,8 +179,8 @@ func (d *FilteredRepositoryDie) DieStamp(fn func(r *v1alpha1.FilteredRepository)
 // Experimental: DieStampAt uses a JSON path (http://goessner.net/articles/JsonPath/) expression to stamp portions of the resource. The callback is invoked with each JSON path match. Panics if the callback function does not accept a single argument of the same type as found on the resource at the target location.
 //
 // Future iterations will improve type coercion from the resource to the callback argument.
-func (d *FilteredRepositoryDie) DieStampAt(jp string, fn interface{}) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) DieStampAt(jp string, fn interface{}) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		cp := jsonpath.New("")
 		if err := cp.Parse(fmtx.Sprintf("{%s}", jp)); err != nil {
 			panic(err)
@@ -198,60 +198,60 @@ func (d *FilteredRepositoryDie) DieStampAt(jp string, fn interface{}) *FilteredR
 }
 
 // DeepCopy returns a new die with equivalent state. Useful for snapshotting a mutable die.
-func (d *FilteredRepositoryDie) DeepCopy() *FilteredRepositoryDie {
+func (d *MonoRepositoryDie) DeepCopy() *MonoRepositoryDie {
 	r := *d.r.DeepCopy()
-	return &FilteredRepositoryDie{
+	return &MonoRepositoryDie{
 		FrozenObjectMeta: v1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
 	}
 }
 
-var _ runtime.Object = (*FilteredRepositoryDie)(nil)
+var _ runtime.Object = (*MonoRepositoryDie)(nil)
 
-func (d *FilteredRepositoryDie) DeepCopyObject() runtime.Object {
+func (d *MonoRepositoryDie) DeepCopyObject() runtime.Object {
 	return d.r.DeepCopy()
 }
 
-func (d *FilteredRepositoryDie) GetObjectKind() schema.ObjectKind {
+func (d *MonoRepositoryDie) GetObjectKind() schema.ObjectKind {
 	r := d.DieRelease()
 	return r.GetObjectKind()
 }
 
-func (d *FilteredRepositoryDie) MarshalJSON() ([]byte, error) {
+func (d *MonoRepositoryDie) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.r)
 }
 
-func (d *FilteredRepositoryDie) UnmarshalJSON(b []byte) error {
-	if d == FilteredRepositoryBlank {
+func (d *MonoRepositoryDie) UnmarshalJSON(b []byte) error {
+	if d == MonoRepositoryBlank {
 		return fmtx.Errorf("cannot unmarshal into the blank die, create a copy first")
 	}
 	if !d.mutable {
 		return fmtx.Errorf("cannot unmarshal into immutable dies, create a mutable version first")
 	}
-	r := &v1alpha1.FilteredRepository{}
+	r := &v1alpha1.MonoRepository{}
 	err := json.Unmarshal(b, r)
 	*d = *d.DieFeed(*r)
 	return err
 }
 
 // APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-func (d *FilteredRepositoryDie) APIVersion(v string) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) APIVersion(v string) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		r.APIVersion = v
 	})
 }
 
 // Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-func (d *FilteredRepositoryDie) Kind(v string) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) Kind(v string) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		r.Kind = v
 	})
 }
 
 // MetadataDie stamps the resource's ObjectMeta field with a mutable die.
-func (d *FilteredRepositoryDie) MetadataDie(fn func(d *v1.ObjectMetaDie)) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) MetadataDie(fn func(d *v1.ObjectMetaDie)) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		d := v1.ObjectMetaBlank.DieImmutable(false).DieFeed(r.ObjectMeta)
 		fn(d)
 		r.ObjectMeta = d.DieRelease()
@@ -259,44 +259,44 @@ func (d *FilteredRepositoryDie) MetadataDie(fn func(d *v1.ObjectMetaDie)) *Filte
 }
 
 // SpecDie stamps the resource's spec field with a mutable die.
-func (d *FilteredRepositoryDie) SpecDie(fn func(d *FilteredRepositorySpecDie)) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
-		d := FilteredRepositorySpecBlank.DieImmutable(false).DieFeed(r.Spec)
+func (d *MonoRepositoryDie) SpecDie(fn func(d *MonoRepositorySpecDie)) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
+		d := MonoRepositorySpecBlank.DieImmutable(false).DieFeed(r.Spec)
 		fn(d)
 		r.Spec = d.DieRelease()
 	})
 }
 
 // StatusDie stamps the resource's status field with a mutable die.
-func (d *FilteredRepositoryDie) StatusDie(fn func(d *FilteredRepositoryStatusDie)) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
-		d := FilteredRepositoryStatusBlank.DieImmutable(false).DieFeed(r.Status)
+func (d *MonoRepositoryDie) StatusDie(fn func(d *MonoRepositoryStatusDie)) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
+		d := MonoRepositoryStatusBlank.DieImmutable(false).DieFeed(r.Status)
 		fn(d)
 		r.Status = d.DieRelease()
 	})
 }
 
-func (d *FilteredRepositoryDie) Spec(v v1alpha1.FilteredRepositorySpec) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) Spec(v v1alpha1.MonoRepositorySpec) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		r.Spec = v
 	})
 }
 
-func (d *FilteredRepositoryDie) Status(v v1alpha1.FilteredRepositoryStatus) *FilteredRepositoryDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepository) {
+func (d *MonoRepositoryDie) Status(v v1alpha1.MonoRepositoryStatus) *MonoRepositoryDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepository) {
 		r.Status = v
 	})
 }
 
-var FilteredRepositorySpecBlank = (&FilteredRepositorySpecDie{}).DieFeed(v1alpha1.FilteredRepositorySpec{})
+var MonoRepositorySpecBlank = (&MonoRepositorySpecDie{}).DieFeed(v1alpha1.MonoRepositorySpec{})
 
-type FilteredRepositorySpecDie struct {
+type MonoRepositorySpecDie struct {
 	mutable bool
-	r       v1alpha1.FilteredRepositorySpec
+	r       v1alpha1.MonoRepositorySpec
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
-func (d *FilteredRepositorySpecDie) DieImmutable(immutable bool) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieImmutable(immutable bool) *MonoRepositorySpecDie {
 	if d.mutable == !immutable {
 		return d
 	}
@@ -306,28 +306,28 @@ func (d *FilteredRepositorySpecDie) DieImmutable(immutable bool) *FilteredReposi
 }
 
 // DieFeed returns a new die with the provided resource.
-func (d *FilteredRepositorySpecDie) DieFeed(r v1alpha1.FilteredRepositorySpec) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieFeed(r v1alpha1.MonoRepositorySpec) *MonoRepositorySpecDie {
 	if d.mutable {
 		d.r = r
 		return d
 	}
-	return &FilteredRepositorySpecDie{
+	return &MonoRepositorySpecDie{
 		mutable: d.mutable,
 		r:       r,
 	}
 }
 
 // DieFeedPtr returns a new die with the provided resource pointer. If the resource is nil, the empty value is used instead.
-func (d *FilteredRepositorySpecDie) DieFeedPtr(r *v1alpha1.FilteredRepositorySpec) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieFeedPtr(r *v1alpha1.MonoRepositorySpec) *MonoRepositorySpecDie {
 	if r == nil {
-		r = &v1alpha1.FilteredRepositorySpec{}
+		r = &v1alpha1.MonoRepositorySpec{}
 	}
 	return d.DieFeed(*r)
 }
 
 // DieFeedJSON returns a new die with the provided JSON. Panics on error.
-func (d *FilteredRepositorySpecDie) DieFeedJSON(j []byte) *FilteredRepositorySpecDie {
-	r := v1alpha1.FilteredRepositorySpec{}
+func (d *MonoRepositorySpecDie) DieFeedJSON(j []byte) *MonoRepositorySpecDie {
+	r := v1alpha1.MonoRepositorySpec{}
 	if err := json.Unmarshal(j, &r); err != nil {
 		panic(err)
 	}
@@ -335,8 +335,8 @@ func (d *FilteredRepositorySpecDie) DieFeedJSON(j []byte) *FilteredRepositorySpe
 }
 
 // DieFeedYAML returns a new die with the provided YAML. Panics on error.
-func (d *FilteredRepositorySpecDie) DieFeedYAML(y []byte) *FilteredRepositorySpecDie {
-	r := v1alpha1.FilteredRepositorySpec{}
+func (d *MonoRepositorySpecDie) DieFeedYAML(y []byte) *MonoRepositorySpecDie {
+	r := v1alpha1.MonoRepositorySpec{}
 	if err := yaml.Unmarshal(y, &r); err != nil {
 		panic(err)
 	}
@@ -344,7 +344,7 @@ func (d *FilteredRepositorySpecDie) DieFeedYAML(y []byte) *FilteredRepositorySpe
 }
 
 // DieFeedYAMLFile returns a new die loading YAML from a file path. Panics on error.
-func (d *FilteredRepositorySpecDie) DieFeedYAMLFile(name string) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieFeedYAMLFile(name string) *MonoRepositorySpecDie {
 	y, err := osx.ReadFile(name)
 	if err != nil {
 		panic(err)
@@ -353,7 +353,7 @@ func (d *FilteredRepositorySpecDie) DieFeedYAMLFile(name string) *FilteredReposi
 }
 
 // DieFeedRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositorySpecDie) DieFeedRawExtension(raw runtime.RawExtension) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieFeedRawExtension(raw runtime.RawExtension) *MonoRepositorySpecDie {
 	j, err := json.Marshal(raw)
 	if err != nil {
 		panic(err)
@@ -362,7 +362,7 @@ func (d *FilteredRepositorySpecDie) DieFeedRawExtension(raw runtime.RawExtension
 }
 
 // DieRelease returns the resource managed by the die.
-func (d *FilteredRepositorySpecDie) DieRelease() v1alpha1.FilteredRepositorySpec {
+func (d *MonoRepositorySpecDie) DieRelease() v1alpha1.MonoRepositorySpec {
 	if d.mutable {
 		return d.r
 	}
@@ -370,13 +370,13 @@ func (d *FilteredRepositorySpecDie) DieRelease() v1alpha1.FilteredRepositorySpec
 }
 
 // DieReleasePtr returns a pointer to the resource managed by the die.
-func (d *FilteredRepositorySpecDie) DieReleasePtr() *v1alpha1.FilteredRepositorySpec {
+func (d *MonoRepositorySpecDie) DieReleasePtr() *v1alpha1.MonoRepositorySpec {
 	r := d.DieRelease()
 	return &r
 }
 
 // DieReleaseJSON returns the resource managed by the die as JSON. Panics on error.
-func (d *FilteredRepositorySpecDie) DieReleaseJSON() []byte {
+func (d *MonoRepositorySpecDie) DieReleaseJSON() []byte {
 	r := d.DieReleasePtr()
 	j, err := json.Marshal(r)
 	if err != nil {
@@ -386,7 +386,7 @@ func (d *FilteredRepositorySpecDie) DieReleaseJSON() []byte {
 }
 
 // DieReleaseYAML returns the resource managed by the die as YAML. Panics on error.
-func (d *FilteredRepositorySpecDie) DieReleaseYAML() []byte {
+func (d *MonoRepositorySpecDie) DieReleaseYAML() []byte {
 	r := d.DieReleasePtr()
 	y, err := yaml.Marshal(r)
 	if err != nil {
@@ -396,7 +396,7 @@ func (d *FilteredRepositorySpecDie) DieReleaseYAML() []byte {
 }
 
 // DieReleaseRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositorySpecDie) DieReleaseRawExtension() runtime.RawExtension {
+func (d *MonoRepositorySpecDie) DieReleaseRawExtension() runtime.RawExtension {
 	j := d.DieReleaseJSON()
 	raw := runtime.RawExtension{}
 	if err := json.Unmarshal(j, &raw); err != nil {
@@ -406,7 +406,7 @@ func (d *FilteredRepositorySpecDie) DieReleaseRawExtension() runtime.RawExtensio
 }
 
 // DieStamp returns a new die with the resource passed to the callback function. The resource is mutable.
-func (d *FilteredRepositorySpecDie) DieStamp(fn func(r *v1alpha1.FilteredRepositorySpec)) *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DieStamp(fn func(r *v1alpha1.MonoRepositorySpec)) *MonoRepositorySpecDie {
 	r := d.DieRelease()
 	fn(&r)
 	return d.DieFeed(r)
@@ -415,8 +415,8 @@ func (d *FilteredRepositorySpecDie) DieStamp(fn func(r *v1alpha1.FilteredReposit
 // Experimental: DieStampAt uses a JSON path (http://goessner.net/articles/JsonPath/) expression to stamp portions of the resource. The callback is invoked with each JSON path match. Panics if the callback function does not accept a single argument of the same type as found on the resource at the target location.
 //
 // Future iterations will improve type coercion from the resource to the callback argument.
-func (d *FilteredRepositorySpecDie) DieStampAt(jp string, fn interface{}) *FilteredRepositorySpecDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositorySpec) {
+func (d *MonoRepositorySpecDie) DieStampAt(jp string, fn interface{}) *MonoRepositorySpecDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositorySpec) {
 		cp := jsonpath.New("")
 		if err := cp.Parse(fmtx.Sprintf("{%s}", jp)); err != nil {
 			panic(err)
@@ -434,35 +434,35 @@ func (d *FilteredRepositorySpecDie) DieStampAt(jp string, fn interface{}) *Filte
 }
 
 // DeepCopy returns a new die with equivalent state. Useful for snapshotting a mutable die.
-func (d *FilteredRepositorySpecDie) DeepCopy() *FilteredRepositorySpecDie {
+func (d *MonoRepositorySpecDie) DeepCopy() *MonoRepositorySpecDie {
 	r := *d.r.DeepCopy()
-	return &FilteredRepositorySpecDie{
+	return &MonoRepositorySpecDie{
 		mutable: d.mutable,
 		r:       r,
 	}
 }
 
-func (d *FilteredRepositorySpecDie) SourceRef(v v1alpha1.SourceRef) *FilteredRepositorySpecDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositorySpec) {
+func (d *MonoRepositorySpecDie) SourceRef(v v1alpha1.SourceRef) *MonoRepositorySpecDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositorySpec) {
 		r.SourceRef = v
 	})
 }
 
-func (d *FilteredRepositorySpecDie) Include(v string) *FilteredRepositorySpecDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositorySpec) {
+func (d *MonoRepositorySpecDie) Include(v string) *MonoRepositorySpecDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositorySpec) {
 		r.Include = v
 	})
 }
 
-var FilteredRepositoryStatusBlank = (&FilteredRepositoryStatusDie{}).DieFeed(v1alpha1.FilteredRepositoryStatus{})
+var MonoRepositoryStatusBlank = (&MonoRepositoryStatusDie{}).DieFeed(v1alpha1.MonoRepositoryStatus{})
 
-type FilteredRepositoryStatusDie struct {
+type MonoRepositoryStatusDie struct {
 	mutable bool
-	r       v1alpha1.FilteredRepositoryStatus
+	r       v1alpha1.MonoRepositoryStatus
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
-func (d *FilteredRepositoryStatusDie) DieImmutable(immutable bool) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieImmutable(immutable bool) *MonoRepositoryStatusDie {
 	if d.mutable == !immutable {
 		return d
 	}
@@ -472,28 +472,28 @@ func (d *FilteredRepositoryStatusDie) DieImmutable(immutable bool) *FilteredRepo
 }
 
 // DieFeed returns a new die with the provided resource.
-func (d *FilteredRepositoryStatusDie) DieFeed(r v1alpha1.FilteredRepositoryStatus) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieFeed(r v1alpha1.MonoRepositoryStatus) *MonoRepositoryStatusDie {
 	if d.mutable {
 		d.r = r
 		return d
 	}
-	return &FilteredRepositoryStatusDie{
+	return &MonoRepositoryStatusDie{
 		mutable: d.mutable,
 		r:       r,
 	}
 }
 
 // DieFeedPtr returns a new die with the provided resource pointer. If the resource is nil, the empty value is used instead.
-func (d *FilteredRepositoryStatusDie) DieFeedPtr(r *v1alpha1.FilteredRepositoryStatus) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieFeedPtr(r *v1alpha1.MonoRepositoryStatus) *MonoRepositoryStatusDie {
 	if r == nil {
-		r = &v1alpha1.FilteredRepositoryStatus{}
+		r = &v1alpha1.MonoRepositoryStatus{}
 	}
 	return d.DieFeed(*r)
 }
 
 // DieFeedJSON returns a new die with the provided JSON. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieFeedJSON(j []byte) *FilteredRepositoryStatusDie {
-	r := v1alpha1.FilteredRepositoryStatus{}
+func (d *MonoRepositoryStatusDie) DieFeedJSON(j []byte) *MonoRepositoryStatusDie {
+	r := v1alpha1.MonoRepositoryStatus{}
 	if err := json.Unmarshal(j, &r); err != nil {
 		panic(err)
 	}
@@ -501,8 +501,8 @@ func (d *FilteredRepositoryStatusDie) DieFeedJSON(j []byte) *FilteredRepositoryS
 }
 
 // DieFeedYAML returns a new die with the provided YAML. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieFeedYAML(y []byte) *FilteredRepositoryStatusDie {
-	r := v1alpha1.FilteredRepositoryStatus{}
+func (d *MonoRepositoryStatusDie) DieFeedYAML(y []byte) *MonoRepositoryStatusDie {
+	r := v1alpha1.MonoRepositoryStatus{}
 	if err := yaml.Unmarshal(y, &r); err != nil {
 		panic(err)
 	}
@@ -510,7 +510,7 @@ func (d *FilteredRepositoryStatusDie) DieFeedYAML(y []byte) *FilteredRepositoryS
 }
 
 // DieFeedYAMLFile returns a new die loading YAML from a file path. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieFeedYAMLFile(name string) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieFeedYAMLFile(name string) *MonoRepositoryStatusDie {
 	y, err := osx.ReadFile(name)
 	if err != nil {
 		panic(err)
@@ -519,7 +519,7 @@ func (d *FilteredRepositoryStatusDie) DieFeedYAMLFile(name string) *FilteredRepo
 }
 
 // DieFeedRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieFeedRawExtension(raw runtime.RawExtension) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieFeedRawExtension(raw runtime.RawExtension) *MonoRepositoryStatusDie {
 	j, err := json.Marshal(raw)
 	if err != nil {
 		panic(err)
@@ -528,7 +528,7 @@ func (d *FilteredRepositoryStatusDie) DieFeedRawExtension(raw runtime.RawExtensi
 }
 
 // DieRelease returns the resource managed by the die.
-func (d *FilteredRepositoryStatusDie) DieRelease() v1alpha1.FilteredRepositoryStatus {
+func (d *MonoRepositoryStatusDie) DieRelease() v1alpha1.MonoRepositoryStatus {
 	if d.mutable {
 		return d.r
 	}
@@ -536,13 +536,13 @@ func (d *FilteredRepositoryStatusDie) DieRelease() v1alpha1.FilteredRepositorySt
 }
 
 // DieReleasePtr returns a pointer to the resource managed by the die.
-func (d *FilteredRepositoryStatusDie) DieReleasePtr() *v1alpha1.FilteredRepositoryStatus {
+func (d *MonoRepositoryStatusDie) DieReleasePtr() *v1alpha1.MonoRepositoryStatus {
 	r := d.DieRelease()
 	return &r
 }
 
 // DieReleaseJSON returns the resource managed by the die as JSON. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieReleaseJSON() []byte {
+func (d *MonoRepositoryStatusDie) DieReleaseJSON() []byte {
 	r := d.DieReleasePtr()
 	j, err := json.Marshal(r)
 	if err != nil {
@@ -552,7 +552,7 @@ func (d *FilteredRepositoryStatusDie) DieReleaseJSON() []byte {
 }
 
 // DieReleaseYAML returns the resource managed by the die as YAML. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieReleaseYAML() []byte {
+func (d *MonoRepositoryStatusDie) DieReleaseYAML() []byte {
 	r := d.DieReleasePtr()
 	y, err := yaml.Marshal(r)
 	if err != nil {
@@ -562,7 +562,7 @@ func (d *FilteredRepositoryStatusDie) DieReleaseYAML() []byte {
 }
 
 // DieReleaseRawExtension returns the resource managed by the die as an raw extension. Panics on error.
-func (d *FilteredRepositoryStatusDie) DieReleaseRawExtension() runtime.RawExtension {
+func (d *MonoRepositoryStatusDie) DieReleaseRawExtension() runtime.RawExtension {
 	j := d.DieReleaseJSON()
 	raw := runtime.RawExtension{}
 	if err := json.Unmarshal(j, &raw); err != nil {
@@ -572,7 +572,7 @@ func (d *FilteredRepositoryStatusDie) DieReleaseRawExtension() runtime.RawExtens
 }
 
 // DieStamp returns a new die with the resource passed to the callback function. The resource is mutable.
-func (d *FilteredRepositoryStatusDie) DieStamp(fn func(r *v1alpha1.FilteredRepositoryStatus)) *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DieStamp(fn func(r *v1alpha1.MonoRepositoryStatus)) *MonoRepositoryStatusDie {
 	r := d.DieRelease()
 	fn(&r)
 	return d.DieFeed(r)
@@ -581,8 +581,8 @@ func (d *FilteredRepositoryStatusDie) DieStamp(fn func(r *v1alpha1.FilteredRepos
 // Experimental: DieStampAt uses a JSON path (http://goessner.net/articles/JsonPath/) expression to stamp portions of the resource. The callback is invoked with each JSON path match. Panics if the callback function does not accept a single argument of the same type as found on the resource at the target location.
 //
 // Future iterations will improve type coercion from the resource to the callback argument.
-func (d *FilteredRepositoryStatusDie) DieStampAt(jp string, fn interface{}) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) DieStampAt(jp string, fn interface{}) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		cp := jsonpath.New("")
 		if err := cp.Parse(fmtx.Sprintf("{%s}", jp)); err != nil {
 			panic(err)
@@ -600,50 +600,50 @@ func (d *FilteredRepositoryStatusDie) DieStampAt(jp string, fn interface{}) *Fil
 }
 
 // DeepCopy returns a new die with equivalent state. Useful for snapshotting a mutable die.
-func (d *FilteredRepositoryStatusDie) DeepCopy() *FilteredRepositoryStatusDie {
+func (d *MonoRepositoryStatusDie) DeepCopy() *MonoRepositoryStatusDie {
 	r := *d.r.DeepCopy()
-	return &FilteredRepositoryStatusDie{
+	return &MonoRepositoryStatusDie{
 		mutable: d.mutable,
 		r:       r,
 	}
 }
 
-func (d *FilteredRepositoryStatusDie) Status(v apis.Status) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) Status(v apis.Status) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.Status = v
 	})
 }
 
 // URL is the dynamic fetch link for the latest Artifact. It is provided on a "best effort" basis, and using the precise GitRepositoryStatus.Artifact data is recommended.
-func (d *FilteredRepositoryStatusDie) URL(v string) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) URL(v string) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.URL = v
 	})
 }
 
 // Artifact represents the last successful GitRepository reconciliation.
-func (d *FilteredRepositoryStatusDie) Artifact(v *v1alpha1.Artifact) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) Artifact(v *v1alpha1.Artifact) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.Artifact = v
 	})
 }
 
 // ObservedInclude is the observed list of GitRepository resources used to calculate the checksum for this artifact
-func (d *FilteredRepositoryStatusDie) ObservedInclude(v string) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) ObservedInclude(v string) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.ObservedInclude = v
 	})
 }
 
 // ObservedFileList is the file list used to calculate the checksum for this artifact
-func (d *FilteredRepositoryStatusDie) ObservedFileList(v string) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) ObservedFileList(v string) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.ObservedFileList = v
 	})
 }
 
-func (d *FilteredRepositoryStatusDie) ReconcileRequestStatus(v meta.ReconcileRequestStatus) *FilteredRepositoryStatusDie {
-	return d.DieStamp(func(r *v1alpha1.FilteredRepositoryStatus) {
+func (d *MonoRepositoryStatusDie) ReconcileRequestStatus(v meta.ReconcileRequestStatus) *MonoRepositoryStatusDie {
+	return d.DieStamp(func(r *v1alpha1.MonoRepositoryStatus) {
 		r.ReconcileRequestStatus = v
 	})
 }
