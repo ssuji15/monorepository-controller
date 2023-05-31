@@ -1,7 +1,7 @@
 package controller_test
 
 import (
-	"github.com/garethjevans/filter-controller/internal/util"
+	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

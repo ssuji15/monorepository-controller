@@ -35,7 +35,7 @@ type SourceRef struct {
 	// FIXME namespace?
 }
 
-// MonoRepositorySpec defines the structure of the filter
+// MonoRepositorySpec defines the structure of the mono repository
 type MonoRepositorySpec struct {
 	SourceRef SourceRef `json:"sourceRef"`
 	Include   string    `json:"include"`
@@ -121,7 +121,7 @@ type Artifact struct {
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
-// MonoRepository is the Schema for the filter API
+// MonoRepository is the Schema for the mono repository API
 type MonoRepository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

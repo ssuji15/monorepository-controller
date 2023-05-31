@@ -23,7 +23,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/garethjevans/filter-controller/internal/controller"
+	"github.com/garethjevans/monorepository-controller/internal/controller"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -36,7 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/garethjevans/filter-controller/api/v1alpha1"
+	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
@@ -104,7 +104,7 @@ func main() {
 	if err = controller.NewMonoRepositoryReconciler(
 		reconcilers.NewConfig(mgr, &v1alpha1.MonoRepository{}, 5*time.Minute),
 	).SetupWithManager(ctx, mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Filter")
+		setupLog.Error(err, "unable to create controller", "controller", "MonoRepository")
 		os.Exit(1)
 	}
 

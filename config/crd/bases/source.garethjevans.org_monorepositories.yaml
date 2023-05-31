@@ -39,7 +39,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MonoRepository is the Schema for the filter API
+        description: MonoRepository is the Schema for the mono repository API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -54,7 +54,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: MonoRepositorySpec defines the structure of the filter
+            description: MonoRepositorySpec defines the structure of the mono repository
             properties:
               include:
                 type: string

@@ -26,7 +26,7 @@ import (
 	json "encoding/json"
 	fmtx "fmt"
 	meta "github.com/fluxcd/pkg/apis/meta"
-	"github.com/garethjevans/filter-controller/api/v1alpha1"
+	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	apis "github.com/vmware-labs/reconciler-runtime/apis"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
