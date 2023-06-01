@@ -4,8 +4,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: garethjevans/filter-controller
+  newName: garethjevans/monorepository-controller
   newTag: latest
-- name: garethjevans/filter-controller
-  newName: garethjevans/filter-controller
+- name: garethjevans/monorepository-controller
+  newName: garethjevans/monorepository-controller
   newTag: latest

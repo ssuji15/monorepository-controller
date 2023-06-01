@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/name: namespace
     app.kubernetes.io/instance: system
     app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: filter
-    app.kubernetes.io/part-of: filter
+    app.kubernetes.io/created-by: monorepository
+    app.kubernetes.io/part-of: monorepository
     app.kubernetes.io/managed-by: kustomize
   name: system
 ---
@@ -21,8 +21,8 @@ metadata:
     app.kubernetes.io/name: deployment
     app.kubernetes.io/instance: controller-manager
     app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: filter
-    app.kubernetes.io/part-of: filter
+    app.kubernetes.io/created-by: monorepository
+    app.kubernetes.io/part-of: monorepository
     app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
@@ -70,7 +70,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: garethjevans/filter-controller:latest
+        image: garethjevans/monorepository-controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

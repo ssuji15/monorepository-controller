@@ -1,6 +1,6 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= garethjevans/filter-controller:latest
+IMG ?= garethjevans/monorepository-controller:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -165,8 +165,8 @@ $(DIEGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install dies.dev/diegen
 
 .PHONY: restart
-restart: ## Restart the filter-controller on the current k8s cluster.
-	kubectl get pods -n filter-system | grep -v NAME | awk '{print $$1}' | xargs kubectl delete pod -n filter-system
+restart: ## Restart the monorepository-controller on the current k8s cluster.
+	kubectl get pods -n monorepository-system | grep -v NAME | awk '{print $$1}' | xargs kubectl delete pod -n monorepository-system
 
 .PHONY: flux
 flux: ## Install fluxcd on the cluster.

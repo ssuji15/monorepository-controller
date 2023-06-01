@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	ngv1alpha1 "github.com/garethjevans/filter-controller/api/v1alpha1"
+	ngv1alpha1 "github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

@@ -35,14 +35,14 @@ type SourceRef struct {
 	// FIXME namespace?
 }
 
-// FilteredRepositorySpec defines the structure of the filter
-type FilteredRepositorySpec struct {
+// MonoRepositorySpec defines the structure of the mono repository
+type MonoRepositorySpec struct {
 	SourceRef SourceRef `json:"sourceRef"`
 	Include   string    `json:"include"`
 }
 
-// FilteredRepositoryStatus defines the observed state of FilteredRepository
-type FilteredRepositoryStatus struct {
+// MonoRepositoryStatus defines the observed state of MonoRepository
+type MonoRepositoryStatus struct {
 	apis.Status `json:",inline"`
 
 	// URL is the dynamic fetch link for the latest Artifact.
@@ -113,7 +113,7 @@ type Artifact struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:shortName=filteredrepo
+//+kubebuilder:resource:shortName=monorepo
 //+kubebuilder:printcolumn:name="Source Ref",type="string",JSONPath=`.spec.sourceRef.name`
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 //+kubebuilder:printcolumn:name="Checksum",type="string",JSONPath=".status.artifact.checksum",description=""
@@ -121,24 +121,24 @@ type Artifact struct {
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
-// FilteredRepository is the Schema for the filter API
-type FilteredRepository struct {
+// MonoRepository is the Schema for the mono repository API
+type MonoRepository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   FilteredRepositorySpec   `json:"spec,omitempty"`
-	Status FilteredRepositoryStatus `json:"status,omitempty"`
+	Spec   MonoRepositorySpec   `json:"spec,omitempty"`
+	Status MonoRepositoryStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// FilteredRepositoryList contains a list of FilteredRepository
-type FilteredRepositoryList struct {
+// MonoRepositoryList contains a list of MonoRepository
+type MonoRepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []FilteredRepository `json:"items"`
+	Items           []MonoRepository `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&FilteredRepository{}, &FilteredRepositoryList{})
+	SchemeBuilder.Register(&MonoRepository{}, &MonoRepositoryList{})
 }

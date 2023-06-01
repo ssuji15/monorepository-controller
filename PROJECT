@@ -5,8 +5,8 @@
 domain: garethjevans.org
 layout:
 - go.kubebuilder.io/v4-alpha
-projectName: filter-controller
-repo: github.com/garethjevans/filter-controller
+projectName: monorepository-controller
+repo: github.com/garethjevans/monorepository-controller
 resources:
 - api:
     crdVersion: v1
@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: garethjevans.org
   group: source
-  kind: FilteredRepository
-  path: github.com/garethjevans/filter-controller/api/v1alpha1
+  kind: MonoRepository
+  path: github.com/garethjevans/monorepository-controller/api/v1alpha1
   version: v1alpha1
 version: "3"

@@ -1,4 +1,4 @@
-package controller
+package util
 
 import (
 	"github.com/fluxcd/pkg/sourceignore"

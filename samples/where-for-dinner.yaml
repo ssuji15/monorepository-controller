@@ -11,7 +11,7 @@ spec:
     branch: main
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-api-gateway
   namespace: default
@@ -27,7 +27,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-availability
   namespace: default
@@ -43,7 +43,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-crawler
   namespace: default
@@ -59,7 +59,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-notify
   namespace: default
@@ -75,7 +75,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-search-poc
   namespace: default
@@ -91,7 +91,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-search
   namespace: default
@@ -107,7 +107,7 @@ spec:
     !**/src/test/**
 ---
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-ui
   namespace: default

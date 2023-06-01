@@ -21,8 +21,8 @@ import (
 	"fmt"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/garethjevans/filter-controller/api/v1alpha1"
-	"github.com/garethjevans/filter-controller/internal/util"
+	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
+	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	"golang.org/x/mod/sumdb/dirhash"
@@ -34,16 +34,16 @@ import (
 	"strings"
 )
 
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=source.garethjevans.org,resources=filteredrepositories/finalizers,verbs=update
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/finalizers,verbs=update
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories;gitrepositories;ocirepositories,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=patch;create;update
 
-func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository] {
-	return &reconcilers.ResourceReconciler[*v1alpha1.FilteredRepository]{
-		Name: "FilteredRepository",
-		Reconciler: reconcilers.Sequence[*v1alpha1.FilteredRepository]{
+func NewMonoRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.MonoRepository] {
+	return &reconcilers.ResourceReconciler[*v1alpha1.MonoRepository]{
+		Name: "MonoRepository",
+		Reconciler: reconcilers.Sequence[*v1alpha1.MonoRepository]{
 			NewResourceValidator(c),
 			NewChecksumCalculator(c),
 		},
@@ -51,10 +51,10 @@ func NewFilteredRepositoryReconciler(c reconcilers.Config) *reconcilers.Resource
 	}
 }
 
-func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
-	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
+func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.MonoRepository] {
+	return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
 		Name: "ResourceValidator",
-		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
+		Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
 			log := util.L(ctx)
 			// resolve the input
 			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
@@ -104,10 +104,10 @@ func retrieveArtifact(ctx context.Context) v1alpha1.Artifact {
 	return v1alpha1.Artifact{}
 }
 
-func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.FilteredRepository] {
-	return &reconcilers.SyncReconciler[*v1alpha1.FilteredRepository]{
+func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.MonoRepository] {
+	return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
 		Name: "ChecksumCalculator",
-		Sync: func(ctx context.Context, resource *v1alpha1.FilteredRepository) error {
+		Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
 			log := util.L(ctx)
 
 			artifact := retrieveArtifact(ctx)
@@ -125,26 +125,26 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 
 				// download the filter and copy from/to path
 				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
-				err = DownloadFile(tarGzLocation, artifact.URL)
+				err = util.DownloadFile(tarGzLocation, artifact.URL)
 				if err != nil {
 					return err
 				}
 
 				// extract tar.gz to temp location
 				tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", resource.Spec.SourceRef.Name))
-				err = ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
+				err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
 				if err != nil {
 					return err
 				}
 
-				files, err := ListFiles(tarGzExtractedLocation)
+				files, err := util.ListFiles(tarGzExtractedLocation)
 				if err != nil {
 					return err
 				}
 
 				log.Info("Full file list", "files", files)
 
-				filteredFiles := FilterFileList(files, resource.Spec.Include)
+				filteredFiles := util.FilterFileList(files, resource.Spec.Include)
 				log.Info("Using files for checksum calculation", "files", filteredFiles)
 				resource.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
 

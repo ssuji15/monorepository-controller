@@ -26,29 +26,29 @@ import (
 	testingx "testing"
 )
 
-func TestFilteredRepositoryDie_MissingMethods(t *testingx.T) {
-	die := FilteredRepositoryBlank
+func TestMonoRepositoryDie_MissingMethods(t *testingx.T) {
+	die := MonoRepositoryBlank
 	ignore := []string{"TypeMeta", "ObjectMeta"}
 	diff := testing.DieFieldDiff(die).Delete(ignore...)
 	if diff.Len() != 0 {
-		t.Errorf("found missing fields for FilteredRepositoryDie: %s", diff.List())
+		t.Errorf("found missing fields for MonoRepositoryDie: %s", diff.List())
 	}
 }
 
-func TestFilteredRepositorySpecDie_MissingMethods(t *testingx.T) {
-	die := FilteredRepositorySpecBlank
+func TestMonoRepositorySpecDie_MissingMethods(t *testingx.T) {
+	die := MonoRepositorySpecBlank
 	ignore := []string{}
 	diff := testing.DieFieldDiff(die).Delete(ignore...)
 	if diff.Len() != 0 {
-		t.Errorf("found missing fields for FilteredRepositorySpecDie: %s", diff.List())
+		t.Errorf("found missing fields for MonoRepositorySpecDie: %s", diff.List())
 	}
 }
 
-func TestFilteredRepositoryStatusDie_MissingMethods(t *testingx.T) {
-	die := FilteredRepositoryStatusBlank
+func TestMonoRepositoryStatusDie_MissingMethods(t *testingx.T) {
+	die := MonoRepositoryStatusBlank
 	ignore := []string{}
 	diff := testing.DieFieldDiff(die).Delete(ignore...)
 	if diff.Len() != 0 {
-		t.Errorf("found missing fields for FilteredRepositoryStatusDie: %s", diff.List())
+		t.Errorf("found missing fields for MonoRepositoryStatusDie: %s", diff.List())
 	}
 }

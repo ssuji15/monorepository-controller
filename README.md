@@ -1,4 +1,4 @@
-# filter-controller
+# monorepository-controller
 
 a proof of concept controller used to determine if "interesting" changes have been to a flux artifact.  We currently support
 `GitRepository`, `HelmRepository` and `OCIRepository`.
@@ -23,11 +23,11 @@ spec:
     branch: main
 ```
 
-Then create a `FilteredRepository`, referencing the upstream resource and the files that should be included for checksum calculation:
+Then create a `MonoRepository`, referencing the upstream resource and the files that should be included for checksum calculation:
 
 ```
 apiVersion: source.garethjevans.org/v1alpha1
-kind: FilteredRepository
+kind: MonoRepository
 metadata:
   name: where-for-dinner-availability
   namespace: default
@@ -60,7 +60,7 @@ status:
     message: resolved artifact from url http://source-controller.default.svc.cluster.local./gitrepository/default/where-for-dinner/68d842cd330410cf0672f862d9a799af4dcdc1d7.tar.gz
     reason: Resolved
     status: "True"
-    type: FilteredRepositoryArtifactResolved
+    type: MonoRepositoryArtifactResolved
   - lastTransitionTime: "2023-05-05T10:39:50Z"
     message: Repository has been successfully filtered for change
     reason: Succeeded
