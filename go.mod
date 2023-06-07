@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.9.7
 	github.com/onsi/gomega v1.27.7
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/vmware-labs/reconciler-runtime v0.12.0
 	github.com/vmware-tanzu/tanzu-source-controller v0.8.0-build.1
 	golang.org/x/mod v0.10.0
