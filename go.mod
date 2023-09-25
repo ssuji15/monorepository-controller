@@ -8,7 +8,7 @@ require (
 	github.com/fluxcd/pkg/sourceignore v0.3.5
 	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-logr/logr v1.2.4
-	github.com/onsi/ginkgo/v2 v2.11.0
+	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.27.10
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-labs/reconciler-runtime v0.13.0
@@ -66,11 +66,11 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
+	golang.org/x/tools v0.12.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
