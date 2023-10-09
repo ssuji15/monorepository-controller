@@ -8,7 +8,7 @@ require (
 	github.com/fluxcd/pkg/sourceignore v0.3.5
 	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-logr/logr v1.2.4
-	github.com/onsi/ginkgo/v2 v2.12.1
+	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.28.0
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-labs/reconciler-runtime v0.13.0
