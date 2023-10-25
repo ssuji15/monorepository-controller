@@ -17,14 +17,21 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
-	"github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/fluxcd/source-controller/api/v1beta2"
 	"os"
 	"time"
 
+	v1 "github.com/fluxcd/source-controller/api/v1"
+	"github.com/fluxcd/source-controller/api/v1beta1"
+	"github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/garethjevans/monorepository-controller/internal/testcert"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	"github.com/garethjevans/monorepository-controller/internal/controller"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -37,7 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
-	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -48,13 +54,12 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	// filtered repository
+	// mono repository
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	// flux
 	utilruntime.Must(v1beta1.AddToScheme(scheme))
 	utilruntime.Must(v1beta2.AddToScheme(scheme))
-	// tanzu source controller
-	utilruntime.Must(sourcev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -62,11 +67,15 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var webhookCertDir string
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&webhookCertDir, "webhook-cert-dir", "", "Directory container certificates for the webhook server.")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -76,9 +85,29 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		Metrics: server.Options{
+			BindAddress: metricsAddr,
+		},
+		WebhookServer: &webhook.DefaultServer{
+			Options: webhook.Options{
+				Port:    9443,
+				CertDir: webhookCertDir,
+				TLSOpts: []func(*tls.Config){func(c *tls.Config) {
+					if webhookCertDir == "" {
+						// TLS cert not provided, use localhost cert
+						cert, err := tls.X509KeyPair(testcert.LocalhostCert, testcert.LocalhostKey)
+						if err != nil {
+							setupLog.Error(err, "unable to generate localhost cert")
+							os.Exit(1)
+						}
+						c.GetCertificate = func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+							return &cert, nil
+						}
+					}
+				}},
+			},
+		},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d0711f0b.garethjevans.org",

@@ -19,19 +19,20 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	apiv1 "github.com/fluxcd/source-controller/api/v1"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
-	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	"golang.org/x/mod/sumdb/dirhash"
-	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
@@ -59,7 +60,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			// resolve the input
 			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
 
-			component := GetKind(resource.Spec.SourceRef.ApiVersion, resource.Spec.SourceRef.Kind)
+			component := GetKind(resource.Spec.SourceRef.APIVersion, resource.Spec.SourceRef.Kind)
 
 			err := c.Client.Get(ctx, key, component)
 			if err != nil {
@@ -162,7 +163,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 					log.Info("Source hasn't changed, there is nothing to update",
 						"name", resource.Spec.SourceRef.Name,
 						"kind", resource.Spec.SourceRef.Kind,
-						"apiVersion", resource.Spec.SourceRef.ApiVersion)
+						"apiVersion", resource.Spec.SourceRef.APIVersion)
 				} else {
 					old := "<NA>"
 					if resource.Status.Artifact != nil {
@@ -203,18 +204,12 @@ func GetKind(apiVersion string, kind string) client.Object {
 	in := match{apiVersion: apiVersion, kind: kind}
 
 	switch in {
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "OCIRepository"}:
-		return &apiv1beta2.OCIRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "HelmRepository"}:
-		return &apiv1beta2.HelmRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "GitRepository"}:
 		return &apiv1beta2.GitRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "HelmRepository"}:
-		return &apiv1beta1.HelmRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
 		return &apiv1beta1.GitRepository{}
-	case match{apiVersion: "source.apps.tanzu.vmware.com/v1alpha1", kind: "ImageRepository"}:
-		return &sourcev1alpha1.ImageRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1", kind: "GitRepository"}:
+		return &apiv1.GitRepository{}
 	}
 
 	return &apiv1beta2.GitRepository{}
@@ -222,13 +217,12 @@ func GetKind(apiVersion string, kind string) client.Object {
 
 func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 	switch v := in.(type) {
-	case *apiv1beta2.OCIRepository:
+	case *apiv1.GitRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
 			Revision:       v.GetArtifact().Revision,
 			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
@@ -238,17 +232,6 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Path:           v.GetArtifact().Path,
 			Revision:       v.GetArtifact().Revision,
 			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
-			Digest:         v.GetArtifact().Digest,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta2.HelmRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
@@ -259,22 +242,6 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Revision:       v.GetArtifact().Revision,
 			Checksum:       v.GetArtifact().Checksum,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta1.HelmRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Checksum:       v.GetArtifact().Checksum,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *sourcev1alpha1.ImageRepository:
-		return v1alpha1.Artifact{
-			URL:            v.Status.Artifact.URL,
-			Path:           v.Status.Artifact.Path,
-			Revision:       v.Status.Artifact.Revision,
-			Checksum:       v.Status.Artifact.Checksum,
-			LastUpdateTime: v.Status.Artifact.LastUpdateTime,
 		}, nil
 	default:
 		return v1alpha1.Artifact{}, fmt.Errorf("unknown type %s", v)

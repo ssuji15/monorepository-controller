@@ -27,21 +27,21 @@ func (in *SourceRef) Key(namespace string) client.ObjectKey {
 	return client.ObjectKey{Name: in.Name, Namespace: namespace}
 }
 
-// SourceRef the GVK and name of the source object
+// SourceRef the GVK and name of the source object.
 type SourceRef struct {
-	ApiVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
 	// FIXME namespace?
 }
 
-// MonoRepositorySpec defines the structure of the mono repository
+// MonoRepositorySpec defines the structure of the mono repository.
 type MonoRepositorySpec struct {
 	SourceRef SourceRef `json:"sourceRef"`
 	Include   string    `json:"include"`
 }
 
-// MonoRepositoryStatus defines the observed state of MonoRepository
+// MonoRepositoryStatus defines the observed state of MonoRepository.
 type MonoRepositoryStatus struct {
 	apis.Status `json:",inline"`
 
@@ -121,7 +121,7 @@ type Artifact struct {
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 
-// MonoRepository is the Schema for the mono repository API
+// MonoRepository is the Schema for the mono repository API.
 type MonoRepository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -132,7 +132,7 @@ type MonoRepository struct {
 
 //+kubebuilder:object:root=true
 
-// MonoRepositoryList contains a list of MonoRepository
+// MonoRepositoryList contains a list of MonoRepository.
 type MonoRepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

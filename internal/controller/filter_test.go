@@ -1,13 +1,13 @@
 package controller_test
 
 import (
+	"testing"
+
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestFilter(t *testing.T) {
-
 	files, err := util.ListFiles("../..")
 	assert.NoError(t, err)
 
