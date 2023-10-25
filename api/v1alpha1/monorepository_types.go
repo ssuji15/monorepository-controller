@@ -18,27 +18,15 @@ package v1alpha1
 
 import (
 	"github.com/fluxcd/pkg/apis/meta"
+	"github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/vmware-labs/reconciler-runtime/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-func (in *SourceRef) Key(namespace string) client.ObjectKey {
-	return client.ObjectKey{Name: in.Name, Namespace: namespace}
-}
-
-// SourceRef the GVK and name of the source object.
-type SourceRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	// FIXME namespace?
-}
 
 // MonoRepositorySpec defines the structure of the mono repository.
 type MonoRepositorySpec struct {
-	SourceRef SourceRef `json:"sourceRef"`
-	Include   string    `json:"include"`
+	GitRepository v1beta2.GitRepositorySpec `json:"gitRepository"`
+	Include       string                    `json:"include"`
 }
 
 // MonoRepositoryStatus defines the observed state of MonoRepository.
