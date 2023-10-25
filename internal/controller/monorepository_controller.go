@@ -19,26 +19,22 @@ package controller
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
-
-	apiv1 "github.com/fluxcd/source-controller/api/v1"
-	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"io"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/finalizers,verbs=update
-//+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories;gitrepositories;ocirepositories,verbs=get;list;watch
+//+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=patch;create;update
 
 func NewMonoRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.MonoRepository] {
@@ -46,204 +42,132 @@ func NewMonoRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReco
 		Name: "MonoRepository",
 		Reconciler: reconcilers.Sequence[*v1alpha1.MonoRepository]{
 			NewResourceValidator(c),
-			NewChecksumCalculator(c),
 		},
 		Config: c,
 	}
 }
 
 func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.MonoRepository] {
-	return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
-		Name: "ResourceValidator",
-		Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
+	return &reconcilers.ChildReconciler[*v1alpha1.MonoRepository, *apiv1beta2.GitRepository, *apiv1beta2.GitRepositoryList]{
+		Name: "GitRepository",
+		DesiredChild: func(ctx context.Context, parent *v1alpha1.MonoRepository) (*apiv1beta2.GitRepository, error) {
+			//log := util.L(ctx)
+
+			child := &apiv1beta2.GitRepository{
+				ObjectMeta: v1.ObjectMeta{
+					Labels:      FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Labels)),
+					Annotations: FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Annotations)),
+					Name:        parent.Name,
+					Namespace:   parent.Namespace,
+				},
+				Spec: parent.Spec.GitRepository,
+			}
+
+			return child, nil
+		},
+		MergeBeforeUpdate: func(actual, desired *apiv1beta2.GitRepository) {
+			actual.Labels = desired.Labels
+			actual.Spec = desired.Spec
+		},
+		ReflectChildStatusOnParent: func(ctx context.Context, parent *v1alpha1.MonoRepository, child *apiv1beta2.GitRepository, err error) {
 			log := util.L(ctx)
-			// resolve the input
-			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
 
-			component := GetKind(resource.Spec.SourceRef.APIVersion, resource.Spec.SourceRef.Kind)
+			if child == nil {
+				// parent.Status.MarkCustomRunFailed("Failed", "Failed to resolve")
+			} else {
 
-			err := c.Client.Get(ctx, key, component)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					log.Info("unable to resolve", "name", key.Name, "namespace", key.Namespace)
-					resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
-				} else {
-					log.Error(err, "error resolving", "name", key.Name, "namespace", key.Namespace)
-					resource.Status.MarkFailed(err)
+				// if child status == Ready == true
+				if isReady(child) {
+					tempDir, err := os.MkdirTemp("", "tmp")
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+					// cleanup on exit
+					defer os.RemoveAll(tempDir)
+
+					log.Info("created temp dir", "dir", tempDir)
+
+					// download the filter and copy from/to path
+					tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", child.Name))
+					err = util.DownloadFile(tarGzLocation, child.Status.Artifact.URL)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					// extract tar.gz to temp location
+					tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", child.Name))
+					err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					files, err := util.ListFiles(tarGzExtractedLocation)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					log.Info("Full file list", "files", files)
+					filteredFiles := util.FilterFileList(files, parent.Spec.Include)
+					log.Info("Using files for checksum calculation", "files", filteredFiles)
+					parent.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
+
+					hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
+						return os.Open(filepath.Join(tarGzExtractedLocation, name))
+					})
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					log.Info("Calculated checksum", "checksum", hash)
+
+					if parent.Status.Artifact != nil && parent.Status.Artifact.Checksum == hash {
+						// nothing has changed, do nothing
+						log.Info("Source hasn't changed, there is nothing to update")
+					} else {
+						old := "<NA>"
+						if parent.Status.Artifact != nil {
+							old = parent.Status.Artifact.Checksum
+						}
+
+						log.Info("Source has changed! updating status with new checksum",
+							"checksum", hash,
+							"old", old)
+						parent.Status.Artifact = &v1alpha1.Artifact{
+							Path:           child.Status.Artifact.Path,
+							URL:            child.Status.Artifact.URL,
+							Revision:       child.Status.Artifact.Revision,
+							Checksum:       hash,
+							Digest:         child.Status.Artifact.Digest,
+							LastUpdateTime: child.Status.Artifact.LastUpdateTime,
+							Size:           child.Status.Artifact.Size,
+							Metadata:       child.Status.Artifact.Metadata,
+						}
+						parent.Status.URL = child.Status.Artifact.URL
+					}
+
+					//resource.Status.ObservedInclude = resource.Spec.Include
+					parent.Status.MarkReady()
 				}
-				return nil
 			}
-
-			// parse the status
-			artifact, err := GetArtifact(component)
-			if err != nil {
-				log.Error(err, "error finding artifact", "name", key.Name, "namespace", key.Namespace)
-				resource.Status.MarkFailed(err)
-			}
-
-			log.Info("got", "artifact", artifact)
-			resource.Status.MarkArtifactResolved(artifact.URL)
-
-			stashArtifact(ctx, artifact)
-
-			return nil
+		},
+		Sanitize: func(child *apiv1beta2.GitRepository) interface{} {
+			return child.Spec
 		},
 	}
 }
 
-const artifactKey reconcilers.StashKey = "artifact"
-
-func stashArtifact(ctx context.Context, artifact v1alpha1.Artifact) {
-	reconcilers.StashValue(ctx, artifactKey, artifact)
-}
-
-func retrieveArtifact(ctx context.Context) v1alpha1.Artifact {
-	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(v1alpha1.Artifact); ok {
-		return components
-	}
-
-	return v1alpha1.Artifact{}
-}
-
-func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.MonoRepository] {
-	return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
-		Name: "ChecksumCalculator",
-		Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
-			log := util.L(ctx)
-
-			artifact := retrieveArtifact(ctx)
-			if artifact.URL != "" {
-				// create a temporary directory
-				tempDir, err := os.MkdirTemp("", "tmp")
-				if err != nil {
-					return err
-				}
-
-				// cleanup on exit
-				defer os.RemoveAll(tempDir)
-
-				log.Info("created temp dir", "dir", tempDir)
-
-				// download the filter and copy from/to path
-				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
-				err = util.DownloadFile(tarGzLocation, artifact.URL)
-				if err != nil {
-					return err
-				}
-
-				// extract tar.gz to temp location
-				tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", resource.Spec.SourceRef.Name))
-				err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
-				if err != nil {
-					return err
-				}
-
-				files, err := util.ListFiles(tarGzExtractedLocation)
-				if err != nil {
-					return err
-				}
-
-				log.Info("Full file list", "files", files)
-
-				filteredFiles := util.FilterFileList(files, resource.Spec.Include)
-				log.Info("Using files for checksum calculation", "files", filteredFiles)
-				resource.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
-
-				hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
-					return os.Open(filepath.Join(tarGzExtractedLocation, name))
-				})
-				if err != nil {
-					return err
-				}
-
-				log.Info("Calculated checksum", "checksum", hash)
-
-				if resource.Status.Artifact != nil && resource.Status.Artifact.Checksum == hash {
-					// nothing has changed, do nothing
-					log.Info("Source hasn't changed, there is nothing to update",
-						"name", resource.Spec.SourceRef.Name,
-						"kind", resource.Spec.SourceRef.Kind,
-						"apiVersion", resource.Spec.SourceRef.APIVersion)
-				} else {
-					old := "<NA>"
-					if resource.Status.Artifact != nil {
-						old = resource.Status.Artifact.Checksum
-					}
-
-					log.Info("Source has changed! updating status with new checksum",
-						"checksum", hash,
-						"old", old)
-					resource.Status.Artifact = &v1alpha1.Artifact{
-						Path:           artifact.Path,
-						URL:            artifact.URL,
-						Revision:       artifact.Revision,
-						Checksum:       hash,
-						Digest:         artifact.Digest,
-						LastUpdateTime: artifact.LastUpdateTime,
-						Size:           artifact.Size,
-						Metadata:       artifact.Metadata,
-					}
-					resource.Status.URL = artifact.URL
-				}
-
-				resource.Status.ObservedInclude = resource.Spec.Include
-				resource.Status.MarkReady()
+func isReady(child *apiv1beta2.GitRepository) bool {
+	if len(child.Status.Conditions) > 0 {
+		for _, c := range child.Status.Conditions {
+			if c.Type == "Ready" {
+				return c.Status == v1.ConditionTrue
 			}
-
-			return nil
-		},
+		}
 	}
-}
-
-func GetKind(apiVersion string, kind string) client.Object {
-	type match struct {
-		kind       string
-		apiVersion string
-	}
-
-	in := match{apiVersion: apiVersion, kind: kind}
-
-	switch in {
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "GitRepository"}:
-		return &apiv1beta2.GitRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
-		return &apiv1beta1.GitRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1", kind: "GitRepository"}:
-		return &apiv1.GitRepository{}
-	}
-
-	return &apiv1beta2.GitRepository{}
-}
-
-func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
-	switch v := in.(type) {
-	case *apiv1.GitRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Size:           v.GetArtifact().Size,
-			Digest:         v.GetArtifact().Digest,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta2.GitRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Size:           v.GetArtifact().Size,
-			Digest:         v.GetArtifact().Digest,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta1.GitRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Checksum:       v.GetArtifact().Checksum,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	default:
-		return v1alpha1.Artifact{}, fmt.Errorf("unknown type %s", v)
-	}
+	return false
 }

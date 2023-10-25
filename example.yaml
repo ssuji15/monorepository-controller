@@ -1,0 +1,14 @@
+apiVersion: source.garethjevans.org/v1alpha1
+kind: MonoRepository
+metadata:
+  name: my-mono-repository
+  namespace: dev
+spec:
+  gitRepository:
+    url: https://github.com/carto-run/app-maven-kaniko-with-subpath
+    interval: 1m
+    ref:
+      branch: main
+  include: |
+    my-subpath
+
