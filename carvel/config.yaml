@@ -15,6 +15,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: monorepository-system/monorepository-serving-cert
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
   name: monorepositories.source.garethjevans.org
@@ -51,7 +52,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MonoRepository is the Schema for the mono repository API
+        description: MonoRepository is the Schema for the mono repository API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -66,30 +67,190 @@ spec:
           metadata:
             type: object
           spec:
-            description: MonoRepositorySpec defines the structure of the mono repository
+            description: MonoRepositorySpec defines the structure of the mono repository.
             properties:
+              gitRepository:
+                description: GitRepositorySpec specifies the required configuration
+                  to produce an Artifact for a Git repository.
+                properties:
+                  accessFrom:
+                    description: 'AccessFrom specifies an Access Control List for
+                      allowing cross-namespace references to this object. NOTE: Not
+                      implemented, provisional as of https://github.com/fluxcd/flux2/pull/2092'
+                    properties:
+                      namespaceSelectors:
+                        description: NamespaceSelectors is the list of namespace selectors
+                          to which this ACL applies. Items in this list are evaluated
+                          using a logical OR operation.
+                        items:
+                          description: NamespaceSelector selects the namespaces to
+                            which this ACL applies. An empty map of MatchLabels matches
+                            all namespaces in a cluster.
+                          properties:
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              description: MatchLabels is a map of {key,value} pairs.
+                                A single {key,value} in the matchLabels map is equivalent
+                                to an element of matchExpressions, whose key field
+                                is "key", the operator is "In", and the values array
+                                contains only "value". The requirements are ANDed.
+                              type: object
+                          type: object
+                        type: array
+                    required:
+                    - namespaceSelectors
+                    type: object
+                  gitImplementation:
+                    default: go-git
+                    description: 'GitImplementation specifies which Git client library
+                      implementation to use. Defaults to ''go-git'', valid values
+                      are (''go-git'', ''libgit2''). Deprecated: gitImplementation
+                      is deprecated now that ''go-git'' is the only supported implementation.'
+                    enum:
+                    - go-git
+                    - libgit2
+                    type: string
+                  ignore:
+                    description: Ignore overrides the set of excluded patterns in
+                      the .sourceignore format (which is the same as .gitignore).
+                      If not provided, a default will be used, consult the documentation
+                      for your version to find out what those are.
+                    type: string
+                  include:
+                    description: Include specifies a list of GitRepository resources
+                      which Artifacts should be included in the Artifact produced
+                      for this GitRepository.
+                    items:
+                      description: GitRepositoryInclude specifies a local reference
+                        to a GitRepository which Artifact (sub-)contents must be included,
+                        and where they should be placed.
+                      properties:
+                        fromPath:
+                          description: FromPath specifies the path to copy contents
+                            from, defaults to the root of the Artifact.
+                          type: string
+                        repository:
+                          description: GitRepositoryRef specifies the GitRepository
+                            which Artifact contents must be included.
+                          properties:
+                            name:
+                              description: Name of the referent.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        toPath:
+                          description: ToPath specifies the path to copy contents
+                            to, defaults to the name of the GitRepositoryRef.
+                          type: string
+                      required:
+                      - repository
+                      type: object
+                    type: array
+                  interval:
+                    description: Interval at which to check the GitRepository for
+                      updates.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+                    type: string
+                  recurseSubmodules:
+                    description: RecurseSubmodules enables the initialization of all
+                      submodules within the GitRepository as cloned from the URL,
+                      using their default settings.
+                    type: boolean
+                  ref:
+                    description: Reference specifies the Git reference to resolve
+                      and monitor for changes, defaults to the 'master' branch.
+                    properties:
+                      branch:
+                        description: Branch to check out, defaults to 'master' if
+                          no other field is defined.
+                        type: string
+                      commit:
+                        description: "Commit SHA to check out, takes precedence over
+                          all reference fields. \n This can be combined with Branch
+                          to shallow clone the branch, in which the commit is expected
+                          to exist."
+                        type: string
+                      name:
+                        description: "Name of the reference to check out; takes precedence
+                          over Branch, Tag and SemVer. \n It must be a valid Git reference:
+                          https://git-scm.com/docs/git-check-ref-format#_description
+                          Examples: \"refs/heads/main\", \"refs/tags/v0.1.0\", \"refs/pull/420/head\",
+                          \"refs/merge-requests/1/head\""
+                        type: string
+                      semver:
+                        description: SemVer tag expression to check out, takes precedence
+                          over Tag.
+                        type: string
+                      tag:
+                        description: Tag to check out, takes precedence over Branch.
+                        type: string
+                    type: object
+                  secretRef:
+                    description: SecretRef specifies the Secret containing authentication
+                      credentials for the GitRepository. For HTTPS repositories the
+                      Secret must contain 'username' and 'password' fields for basic
+                      auth or 'bearerToken' field for token auth. For SSH repositories
+                      the Secret must contain 'identity' and 'known_hosts' fields.
+                    properties:
+                      name:
+                        description: Name of the referent.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  suspend:
+                    description: Suspend tells the controller to suspend the reconciliation
+                      of this GitRepository.
+                    type: boolean
+                  timeout:
+                    default: 60s
+                    description: Timeout for Git operations like cloning, defaults
+                      to 60s.
+                    pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m))+$
+                    type: string
+                  url:
+                    description: URL specifies the Git repository URL, it can be an
+                      HTTP/S or SSH address.
+                    pattern: ^(http|https|ssh)://.*$
+                    type: string
+                  verify:
+                    description: Verification specifies the configuration to verify
+                      the Git commit signature(s).
+                    properties:
+                      mode:
+                        description: Mode specifies what Git object should be verified,
+                          currently ('head').
+                        enum:
+                        - head
+                        type: string
+                      secretRef:
+                        description: SecretRef specifies the Secret containing the
+                          public keys of trusted Git authors.
+                        properties:
+                          name:
+                            description: Name of the referent.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - mode
+                    - secretRef
+                    type: object
+                required:
+                - interval
+                - url
+                type: object
               include:
                 type: string
-              sourceRef:
-                description: SourceRef the GVK and name of the source object
-                properties:
-                  apiVersion:
-                    type: string
-                  kind:
-                    type: string
-                  name:
-                    type: string
-                required:
-                - apiVersion
-                - kind
-                - name
-                type: object
             required:
+            - gitRepository
             - include
-            - sourceRef
             type: object
           status:
-            description: MonoRepositoryStatus defines the observed state of MonoRepository
+            description: MonoRepositoryStatus defines the observed state of MonoRepository.
             properties:
               artifact:
                 description: Artifact represents the last successful GitRepository
@@ -238,6 +399,8 @@ spec:
       status: {}
 ---
 apiVersion: v1
+imagePullSecrets:
+- name: monorepository-pull-secret
 kind: ServiceAccount
 metadata:
   labels:
@@ -339,8 +502,6 @@ rules:
   - source.toolkit.fluxcd.io
   resources:
   - gitrepositories
-  - helmrepositories
-  - ocirepositories
   verbs:
   - get
   - list
@@ -387,6 +548,36 @@ subjects:
   name: monorepository-controller-manager
   namespace: monorepository-system
 ---
+apiVersion: v1
+data:
+  .dockerconfigjson: e30K
+kind: Secret
+metadata:
+  annotations:
+    secretgen.carvel.dev/image-pull-secret: ""
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: monorepository-controller
+    app.kubernetes.io/instance: pull-secret
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: secret
+    app.kubernetes.io/part-of: monorepository-controller
+  name: monorepository-pull-secret
+  namespace: monorepository-system
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monorepository-webhook-service
+  namespace: monorepository-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -430,6 +621,45 @@ spec:
                 - linux
       containers:
       - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --webhook-cert-dir=/tmp/k8s-webhook-server/serving-certs
+        - --leader-elect
+        image: controller:latest
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      - args:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
@@ -452,39 +682,66 @@ spec:
           capabilities:
             drop:
             - ALL
-      - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
-        - --leader-elect
-        command:
-        - /manager
-        image: controller:latest
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
       securityContext:
         runAsNonRoot: true
       serviceAccountName: monorepository-controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: monorepository-serving-cert
+  namespace: monorepository-system
+spec:
+  dnsNames:
+  - monorepository-webhook-service.monorepository-system.svc
+  - monorepository-webhook-service.monorepository-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: monorepository-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: monorepository-selfsigned-issuer
+  namespace: monorepository-system
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: monorepository-system/monorepository-serving-cert
+  creationTimestamp: null
+  name: monorepository-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: monorepository-webhook-service
+      namespace: monorepository-system
+      path: /integrity-source-garethjevans-org-monorepository
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: integrity.monorepository.source.garethjevans.org
+  rules:
+  - apiGroups:
+    - source.garethjevans.org
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - monorepositories
+  sideEffects: None

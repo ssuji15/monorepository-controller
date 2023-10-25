@@ -19,6 +19,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/garethjevans/monorepository-controller/internal/integrity"
 	"os"
 	"time"
 
@@ -136,6 +137,8 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "MonoRepository")
 		os.Exit(1)
 	}
+
+	integrity.RegisterReferentialIntegrityWebhooks(mgr)
 
 	//+kubebuilder:scaffold:builder
 
