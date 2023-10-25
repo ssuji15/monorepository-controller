@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	apiv1 "github.com/fluxcd/source-controller/api/v1"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
@@ -206,6 +207,8 @@ func GetKind(apiVersion string, kind string) client.Object {
 		return &apiv1beta2.GitRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
 		return &apiv1beta1.GitRepository{}
+	case match{apiVersion: "source.toolkit.fluxcd.io/v1", kind: "GitRepository"}:
+		return &apiv1.GitRepository{}
 	}
 
 	return &apiv1beta2.GitRepository{}
@@ -213,13 +216,21 @@ func GetKind(apiVersion string, kind string) client.Object {
 
 func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 	switch v := in.(type) {
+	case *apiv1.GitRepository:
+		return v1alpha1.Artifact{
+			URL:            v.GetArtifact().URL,
+			Path:           v.GetArtifact().Path,
+			Revision:       v.GetArtifact().Revision,
+			Size:           v.GetArtifact().Size,
+			Digest:         v.GetArtifact().Digest,
+			LastUpdateTime: v.GetArtifact().LastUpdateTime,
+		}, nil
 	case *apiv1beta2.GitRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
 			Revision:       v.GetArtifact().Revision,
 			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
 			Digest:         v.GetArtifact().Digest,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
 		}, nil
