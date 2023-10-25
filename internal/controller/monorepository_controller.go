@@ -21,8 +21,14 @@ import (
 	"fmt"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
+	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
+	"golang.org/x/mod/sumdb/dirhash"
+	"io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
@@ -36,7 +42,6 @@ func NewMonoRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReco
 		Name: "MonoRepository",
 		Reconciler: reconcilers.Sequence[*v1alpha1.MonoRepository]{
 			NewResourceValidator(c),
-			//NewChecksumCalculator(c),
 		},
 		Config: c,
 	}
@@ -52,9 +57,8 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 				ObjectMeta: v1.ObjectMeta{
 					Labels:      FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Labels)),
 					Annotations: FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Annotations)),
-
-					GenerateName: fmt.Sprintf("%s-mr-", parent.Name),
-					Namespace:    parent.Namespace,
+					Name:        parent.Name,
+					Namespace:   parent.Namespace,
 				},
 				Spec: parent.Spec.GitRepository,
 			}
@@ -66,178 +70,104 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			actual.Spec = desired.Spec
 		},
 		ReflectChildStatusOnParent: func(ctx context.Context, parent *v1alpha1.MonoRepository, child *apiv1beta2.GitRepository, err error) {
-			//log := util.L(ctx)
+			log := util.L(ctx)
 
 			if child == nil {
 				// parent.Status.MarkCustomRunFailed("Failed", "Failed to resolve")
 			} else {
-				//for _, rm := range child.Spec.ResultMappings {
-				//	if !HasResultWithName(parent.Status.Results, rm.Name) {
-				//		if hasResultWithName(child.Status.Results, rm.Name) {
-				//			value := findResultWithName(child.Status.Results, rm.Name).Value
-				//			log.Info("Adding result", "name", rm.Name, "value", value)
-				//
-				//			parent.Status.Results = append(parent.Status.Results, tektonv1beta1.CustomRunResult{
-				//				Name:  rm.Name,
-				//				Value: value,
-				//			})
-				//		}
-				//	}
-				//}
-				//
-				//healthy := child.Status.GetCondition("Healthy")
-				//if healthy == nil || healthy.Status == "Unknown" {
-				//	parent.Status.MarkCustomRunRunning("Running", "")
-				//} else if healthy.Status == "True" {
-				//	parent.Status.MarkCustomRunSucceeded("Succeeded", healthy.Message)
-				//} else {
-				//	parent.Status.MarkCustomRunFailed("Failed", healthy.Message)
-				//}
+
+				// if child status == Ready == true
+				if isReady(child) {
+					tempDir, err := os.MkdirTemp("", "tmp")
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+					// cleanup on exit
+					defer os.RemoveAll(tempDir)
+
+					log.Info("created temp dir", "dir", tempDir)
+
+					// download the filter and copy from/to path
+					tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", child.Name))
+					err = util.DownloadFile(tarGzLocation, child.Status.Artifact.URL)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					// extract tar.gz to temp location
+					tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", child.Name))
+					err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					files, err := util.ListFiles(tarGzExtractedLocation)
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					log.Info("Full file list", "files", files)
+					filteredFiles := util.FilterFileList(files, parent.Spec.Include)
+					log.Info("Using files for checksum calculation", "files", filteredFiles)
+					parent.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
+
+					hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
+						return os.Open(filepath.Join(tarGzExtractedLocation, name))
+					})
+					if err != nil {
+						parent.Status.MarkFailed(err)
+						return
+					}
+
+					log.Info("Calculated checksum", "checksum", hash)
+
+					if parent.Status.Artifact != nil && parent.Status.Artifact.Checksum == hash {
+						// nothing has changed, do nothing
+						log.Info("Source hasn't changed, there is nothing to update")
+					} else {
+						old := "<NA>"
+						if parent.Status.Artifact != nil {
+							old = parent.Status.Artifact.Checksum
+						}
+
+						log.Info("Source has changed! updating status with new checksum",
+							"checksum", hash,
+							"old", old)
+						parent.Status.Artifact = &v1alpha1.Artifact{
+							Path:           child.Status.Artifact.Path,
+							URL:            child.Status.Artifact.URL,
+							Revision:       child.Status.Artifact.Revision,
+							Checksum:       hash,
+							Digest:         child.Status.Artifact.Digest,
+							LastUpdateTime: child.Status.Artifact.LastUpdateTime,
+							Size:           child.Status.Artifact.Size,
+							Metadata:       child.Status.Artifact.Metadata,
+						}
+						parent.Status.URL = child.Status.Artifact.URL
+					}
+
+					//resource.Status.ObservedInclude = resource.Spec.Include
+					parent.Status.MarkReady()
+				}
 			}
 		},
 		Sanitize: func(child *apiv1beta2.GitRepository) interface{} {
 			return child.Spec
 		},
 	}
-
-	//return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
-	//	Name: "ResourceValidator",
-	//	Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
-	//		log := util.L(ctx)
-	//		// resolve the input
-	//		key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
-	//
-	//		component := GetKind(resource.Spec.SourceRef.APIVersion, resource.Spec.SourceRef.Kind)
-	//
-	//		err := c.Client.Get(ctx, key, component)
-	//		if err != nil {
-	//			if errors.IsNotFound(err) {
-	//				log.Info("unable to resolve", "name", key.Name, "namespace", key.Namespace)
-	//				resource.Status.MarkResourceMissing(key.Name, key.Name, key.Namespace)
-	//			} else {
-	//				log.Error(err, "error resolving", "name", key.Name, "namespace", key.Namespace)
-	//				resource.Status.MarkFailed(err)
-	//			}
-	//			return nil
-	//		}
-	//
-	//		// parse the status
-	//		artifact, err := GetArtifact(component)
-	//		if err != nil {
-	//			log.Error(err, "error finding artifact", "name", key.Name, "namespace", key.Namespace)
-	//			resource.Status.MarkFailed(err)
-	//		}
-	//
-	//		log.Info("got", "artifact", artifact)
-	//		resource.Status.MarkArtifactResolved(artifact.URL)
-	//
-	//		stashArtifact(ctx, artifact)
-	//
-	//		return nil
-	//	},
-	//}
 }
 
-const artifactKey reconcilers.StashKey = "artifact"
-
-//func stashArtifact(ctx context.Context, artifact v1alpha1.Artifact) {
-//	reconcilers.StashValue(ctx, artifactKey, artifact)
-//}
-//
-//func retrieveArtifact(ctx context.Context) v1alpha1.Artifact {
-//	if components, ok := reconcilers.RetrieveValue(ctx, artifactKey).(v1alpha1.Artifact); ok {
-//		return components
-//	}
-//
-//	return v1alpha1.Artifact{}
-//}
-
-//func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1alpha1.MonoRepository] {
-//	return &reconcilers.SyncReconciler[*v1alpha1.MonoRepository]{
-//		Name: "ChecksumCalculator",
-//		Sync: func(ctx context.Context, resource *v1alpha1.MonoRepository) error {
-//			log := util.L(ctx)
-//
-//			artifact := retrieveArtifact(ctx)
-//			if artifact.URL != "" {
-//				// create a temporary directory
-//				tempDir, err := os.MkdirTemp("", "tmp")
-//				if err != nil {
-//					return err
-//				}
-//
-//				// cleanup on exit
-//				defer os.RemoveAll(tempDir)
-//
-//				log.Info("created temp dir", "dir", tempDir)
-//
-//				// download the filter and copy from/to path
-//				tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", resource.Spec.SourceRef.Name))
-//				err = util.DownloadFile(tarGzLocation, artifact.URL)
-//				if err != nil {
-//					return err
-//				}
-//
-//				// extract tar.gz to temp location
-//				tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", resource.Spec.SourceRef.Name))
-//				err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
-//				if err != nil {
-//					return err
-//				}
-//
-//				files, err := util.ListFiles(tarGzExtractedLocation)
-//				if err != nil {
-//					return err
-//				}
-//
-//				log.Info("Full file list", "files", files)
-//
-//				filteredFiles := util.FilterFileList(files, resource.Spec.Include)
-//				log.Info("Using files for checksum calculation", "files", filteredFiles)
-//				resource.Status.ObservedFileList = strings.Join(filteredFiles, "\n")
-//
-//				hash, err := dirhash.Hash1(filteredFiles, func(name string) (io.ReadCloser, error) {
-//					return os.Open(filepath.Join(tarGzExtractedLocation, name))
-//				})
-//				if err != nil {
-//					return err
-//				}
-//
-//				log.Info("Calculated checksum", "checksum", hash)
-//
-//				if resource.Status.Artifact != nil && resource.Status.Artifact.Checksum == hash {
-//					// nothing has changed, do nothing
-//					log.Info("Source hasn't changed, there is nothing to update",
-//						"name", resource.Spec.SourceRef.Name,
-//						"kind", resource.Spec.SourceRef.Kind,
-//						"apiVersion", resource.Spec.SourceRef.APIVersion)
-//				} else {
-//					old := "<NA>"
-//					if resource.Status.Artifact != nil {
-//						old = resource.Status.Artifact.Checksum
-//					}
-//
-//					log.Info("Source has changed! updating status with new checksum",
-//						"checksum", hash,
-//						"old", old)
-//					resource.Status.Artifact = &v1alpha1.Artifact{
-//						Path:           artifact.Path,
-//						URL:            artifact.URL,
-//						Revision:       artifact.Revision,
-//						Checksum:       hash,
-//						Digest:         artifact.Digest,
-//						LastUpdateTime: artifact.LastUpdateTime,
-//						Size:           artifact.Size,
-//						Metadata:       artifact.Metadata,
-//					}
-//					resource.Status.URL = artifact.URL
-//				}
-//
-//				resource.Status.ObservedInclude = resource.Spec.Include
-//				resource.Status.MarkReady()
-//			}
-//
-//			return nil
-//		},
-//	}
-//}
+func isReady(child *apiv1beta2.GitRepository) bool {
+	if len(child.Status.Conditions) > 0 {
+		for _, c := range child.Status.Conditions {
+			if c.Type == "Ready" {
+				return c.Status == v1.ConditionTrue
+			}
+		}
+	}
+	return false
+}

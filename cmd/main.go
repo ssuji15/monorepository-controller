@@ -131,7 +131,7 @@ func main() {
 	ctx := ctrl.SetupSignalHandler()
 
 	if err = controller.NewMonoRepositoryReconciler(
-		reconcilers.NewConfig(mgr, &v1alpha1.MonoRepository{}, 5*time.Minute),
+		reconcilers.NewConfig(mgr, &v1alpha1.MonoRepository{}, 10*time.Hour),
 	).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MonoRepository")
 		os.Exit(1)

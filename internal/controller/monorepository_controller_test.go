@@ -62,8 +62,8 @@ func TestMonoRepository(t *testing.T) {
 				&apiv1beta2.GitRepository{
 					TypeMeta: metav1.TypeMeta{},
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "mono-repository-mr-",
-						Namespace:    "dev",
+						Name:      "mono-repository",
+						Namespace: "dev",
 						OwnerReferences: []metav1.OwnerReference{
 							{
 								APIVersion:         "source.garethjevans.org/v1alpha1",
@@ -82,7 +82,7 @@ func TestMonoRepository(t *testing.T) {
 			},
 
 			ExpectEvents: []rtesting.Event{
-				rtesting.NewEvent(baseMonoRepo, scheme, corev1.EventTypeNormal, "Created", "Created GitRepository %q", "mono-repository-mr-001"),
+				rtesting.NewEvent(baseMonoRepo, scheme, corev1.EventTypeNormal, "Created", "Created GitRepository %q", "mono-repository"),
 			},
 		},
 	}
