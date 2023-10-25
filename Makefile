@@ -1,6 +1,10 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= garethjevans/monorepository-controller:latest
+IMG ?= controller:latest
+
+REGISTRY_HOST ?= dev.registry.tanzu.vmware.com
+REGISTRY_PROJECT ?= supply-chain-choreographer/monorepository-controller
+CONTROLLER_VERSION ?= 0.0.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -137,10 +141,16 @@ $(LOCALBIN):
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 DIEGEN ?= $(LOCALBIN)/diegen
+YTT ?= $(LOCALBIN)/ytt
+KAPP ?= $(LOCALBIN)/kapp
+PACKAGE_VALIDATOR ?= $(LOCALBIN)/package-validator
 
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v4.5.7
+KUSTOMIZE_VERSION ?= v5.2.1
 CONTROLLER_TOOLS_VERSION ?= v0.11.1
+YTT_VERSION ?= v0.45.4
+KAPP_VERSION ?= v0.58.0
+PACKAGE_VALIDATOR_VERSION ?= main
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -158,11 +168,26 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
-
 .PHONY: diegen
 diegen: $(DIEGEN)
 $(DIEGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install dies.dev/diegen
+
+.PHONY: ytt
+ytt: $(YTT)
+$(YTT): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/vmware-tanzu/carvel-ytt/cmd/ytt@$(YTT_VERSION)
+
+.PHONY: kapp
+kapp: $(KAPP)
+$(KAPP): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/vmware-tanzu/carvel-kapp/cmd/kapp@$(KAPP_VERSION)
+
+.PHONY: package-validator
+package-validator: $(PACKAGE_VALIDATOR)
+$(PACKAGE_VALIDATOR): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/garethjevans/package-validator/cmd/package-validator@$(PACKAGE_VALIDATOR_VERSION)
+
 
 .PHONY: restart
 restart: ## Restart the monorepository-controller on the current k8s cluster.
@@ -173,3 +198,33 @@ flux: ## Install fluxcd on the cluster.
 	kubectl apply -f hack/flux/rbac.yaml
 	kubectl apply -f https://github.com/fluxcd/source-controller/releases/download/v0.36.1/source-controller.crds.yaml
 	kubectl apply -f https://github.com/fluxcd/source-controller/releases/download/v0.36.1/source-controller.deployment.yaml
+
+.PHONY: carvel
+carvel: kustomize
+	$(KUSTOMIZE) build config/default > carvel/config.yaml
+
+.PHONY: package
+package: carvel ytt package-validator
+	$(YTT) -f build-templates/kbld-config.yaml -f build-templates/values-schema.yaml -v build.registry_host=$(REGISTRY_HOST) -v build.registry_project=$(REGISTRY_PROJECT) > kbld-config.yaml
+	$(YTT) -f build-templates/package-build.yml -f build-templates/values-schema.yaml -v build.registry_host=$(REGISTRY_HOST) -v build.registry_project=$(REGISTRY_PROJECT) > package-build.yml
+	$(YTT) -f build-templates/package-resources.yml -f build-templates/values-schema.yaml > package-resources.yml
+
+	kctrl package release -v $(CONTROLLER_VERSION) -y --debug
+
+	rm -f kbld-config.yaml
+	rm -f package-build.yml
+	rm -f package-resources.yml
+
+	$(PACKAGE_VALIDATOR) validate --path carvel-artifacts
+
+.PHONY: install-from-package
+install-from-package:
+	kubectl apply -n tap-install -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/package.yml
+	kubectl apply -n tap-install -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/metadata.yml
+	kubectl apply -n tap-install -f install/package-install.yaml
+
+.PHONY: uninstall-from-package
+uninstall-from-package:
+	kubectl delete -f install/package-install.yaml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/package.yml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/metadata.yml --ignore-not-found=$(ignore-not-found)

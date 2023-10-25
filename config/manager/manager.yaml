@@ -70,7 +70,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: garethjevans/monorepository-controller:latest
+        image: controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
