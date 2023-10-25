@@ -1,41 +1,27 @@
 # monorepository-controller
 
 a proof of concept controller used to determine if "interesting" changes have been to a flux artifact.  We currently support
-`GitRepository`, `HelmRepository` and `OCIRepository`.
+`GitRepository`.
 
 The controller works by calculating a checksum for the exploded archive based on an "include" list of files.  If this checksum changes
 then the `.status.artifact.url` changes.
 
 ## Example
 
-First create a `*Repository` resource to point to the upstream location;
+Then create a `MonoRepository` that wraps a `GitRepository` e.g.
 
-```
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: GitRepository
-metadata:
-  name: where-for-dinner
-  namespace: default
-spec:
-  interval: 5m
-  url: https://github.com/garethjevans/where-for-dinner
-  ref:
-    branch: main
-```
-
-Then create a `MonoRepository`, referencing the upstream resource and the files that should be included for checksum calculation:
-
-```
+```yaml
 apiVersion: source.garethjevans.org/v1alpha1
 kind: MonoRepository
 metadata:
   name: where-for-dinner-availability
   namespace: default
 spec:
-  sourceRef:
-    apiVersion: source.toolkit.fluxcd.io/v1beta2
-    kind: GitRepository
-    name: where-for-dinner
+  gitRepository:
+    interval: 5m
+    url: https://github.com/garethjevans/where-for-dinner
+    ref:
+      branch: main
   include: |
     /pom.xml
     /where-for-dinner-availability

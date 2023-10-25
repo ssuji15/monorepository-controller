@@ -219,12 +219,12 @@ package: carvel ytt package-validator
 
 .PHONY: install-from-package
 install-from-package:
-	kubectl apply -n tap-install -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/package.yml
-	kubectl apply -n tap-install -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/metadata.yml
+	kubectl apply -n tap-install -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/package.yml
+	kubectl apply -n tap-install -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/metadata.yml
 	kubectl apply -n tap-install -f install/package-install.yaml
 
 .PHONY: uninstall-from-package
 uninstall-from-package:
 	kubectl delete -f install/package-install.yaml --ignore-not-found=$(ignore-not-found)
-	kubectl delete -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/package.yml --ignore-not-found=$(ignore-not-found)
-	kubectl delete -f carvel-artifacts/packages/managed-resource-controller.tanzu.vmware.com/metadata.yml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/package.yml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/metadata.yml --ignore-not-found=$(ignore-not-found)
