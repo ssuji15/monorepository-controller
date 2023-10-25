@@ -106,7 +106,7 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 ##@ Deployment
 
 ifndef ignore-not-found
-  ignore-not-found = false
+  ignore-not-found = true
 endif
 
 .PHONY: install
@@ -226,5 +226,5 @@ install-from-package:
 .PHONY: uninstall-from-package
 uninstall-from-package:
 	kubectl delete -f install/package-install.yaml --ignore-not-found=$(ignore-not-found)
-	kubectl delete -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/package.yml --ignore-not-found=$(ignore-not-found)
-	kubectl delete -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/metadata.yml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -n tap-install -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/package.yml --ignore-not-found=$(ignore-not-found)
+	kubectl delete -n tap-install -f carvel-artifacts/packages/monorepository.apps.tanzu.vmware.com/metadata.yml --ignore-not-found=$(ignore-not-found)

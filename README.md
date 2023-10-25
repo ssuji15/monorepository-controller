@@ -6,6 +6,20 @@ a proof of concept controller used to determine if "interesting" changes have be
 The controller works by calculating a checksum for the exploded archive based on an "include" list of files.  If this checksum changes
 then the `.status.artifact.url` changes.
 
+## Installation
+
+```shell
+# this should be a location in dev.registry that you have write access to
+export REGISTRY_PROJECT=project/repo
+make package install-from-package
+```
+
+Validate that the install is working:
+
+```shell
+kubectl get pkgi -n tap-install monorepository
+```
+
 ## Example
 
 Then create a `MonoRepository` that wraps a `GitRepository` e.g.

@@ -625,8 +625,6 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --webhook-cert-dir=/tmp/k8s-webhook-server/serving-certs
         - --leader-elect
-        command:
-        - /manager
         image: controller:latest
         livenessProbe:
           httpGet:
