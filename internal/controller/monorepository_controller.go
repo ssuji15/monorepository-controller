@@ -279,5 +279,4 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 	default:
 		return v1alpha1.Artifact{}, fmt.Errorf("unknown type %s", v)
 	}
-	return v1alpha1.Artifact{}, fmt.Errorf("unknown type")
 }
