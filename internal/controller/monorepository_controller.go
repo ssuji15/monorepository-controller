@@ -19,6 +19,11 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
 	apiv1 "github.com/fluxcd/source-controller/api/v1"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -26,12 +31,8 @@ import (
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
-	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"os"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
@@ -59,7 +60,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			// resolve the input
 			key := resource.Spec.SourceRef.Key(resource.ObjectMeta.Namespace)
 
-			component := GetKind(resource.Spec.SourceRef.ApiVersion, resource.Spec.SourceRef.Kind)
+			component := GetKind(resource.Spec.SourceRef.APIVersion, resource.Spec.SourceRef.Kind)
 
 			err := c.Client.Get(ctx, key, component)
 			if err != nil {
@@ -162,7 +163,7 @@ func NewChecksumCalculator(c reconcilers.Config) reconcilers.SubReconciler[*v1al
 					log.Info("Source hasn't changed, there is nothing to update",
 						"name", resource.Spec.SourceRef.Name,
 						"kind", resource.Spec.SourceRef.Kind,
-						"apiVersion", resource.Spec.SourceRef.ApiVersion)
+						"apiVersion", resource.Spec.SourceRef.APIVersion)
 				} else {
 					old := "<NA>"
 					if resource.Status.Artifact != nil {

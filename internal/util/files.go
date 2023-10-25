@@ -1,13 +1,14 @@
 package util
 
 import (
-	"github.com/fluxcd/pkg/sourceignore"
-	"golang.org/x/mod/sumdb/dirhash"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fluxcd/pkg/sourceignore"
+	"golang.org/x/mod/sumdb/dirhash"
 )
 
 func ListFiles(dir string) ([]string, error) {

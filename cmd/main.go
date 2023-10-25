@@ -19,17 +19,19 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"github.com/fluxcd/source-controller/api/v1"
+	"os"
+	"time"
+
+	v1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/internal/testcert"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"time"
 
 	"github.com/garethjevans/monorepository-controller/internal/controller"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
