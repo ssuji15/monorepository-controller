@@ -24,7 +24,6 @@ import (
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
-	sourcev1alpha1 "github.com/vmware-tanzu/tanzu-source-controller/apis/source/v1alpha1"
 	"golang.org/x/mod/sumdb/dirhash"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -203,18 +202,10 @@ func GetKind(apiVersion string, kind string) client.Object {
 	in := match{apiVersion: apiVersion, kind: kind}
 
 	switch in {
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "OCIRepository"}:
-		return &apiv1beta2.OCIRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "HelmRepository"}:
-		return &apiv1beta2.HelmRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta2", kind: "GitRepository"}:
 		return &apiv1beta2.GitRepository{}
-	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "HelmRepository"}:
-		return &apiv1beta1.HelmRepository{}
 	case match{apiVersion: "source.toolkit.fluxcd.io/v1beta1", kind: "GitRepository"}:
 		return &apiv1beta1.GitRepository{}
-	case match{apiVersion: "source.apps.tanzu.vmware.com/v1alpha1", kind: "ImageRepository"}:
-		return &sourcev1alpha1.ImageRepository{}
 	}
 
 	return &apiv1beta2.GitRepository{}
@@ -222,27 +213,7 @@ func GetKind(apiVersion string, kind string) client.Object {
 
 func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 	switch v := in.(type) {
-	case *apiv1beta2.OCIRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
-			Digest:         v.GetArtifact().Digest,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
 	case *apiv1beta2.GitRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Size:           v.GetArtifact().Size,
-			Checksum:       v.GetArtifact().Checksum,
-			Digest:         v.GetArtifact().Digest,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta2.HelmRepository:
 		return v1alpha1.Artifact{
 			URL:            v.GetArtifact().URL,
 			Path:           v.GetArtifact().Path,
@@ -259,22 +230,6 @@ func GetArtifact(in interface{}) (v1alpha1.Artifact, error) {
 			Revision:       v.GetArtifact().Revision,
 			Checksum:       v.GetArtifact().Checksum,
 			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *apiv1beta1.HelmRepository:
-		return v1alpha1.Artifact{
-			URL:            v.GetArtifact().URL,
-			Path:           v.GetArtifact().Path,
-			Revision:       v.GetArtifact().Revision,
-			Checksum:       v.GetArtifact().Checksum,
-			LastUpdateTime: v.GetArtifact().LastUpdateTime,
-		}, nil
-	case *sourcev1alpha1.ImageRepository:
-		return v1alpha1.Artifact{
-			URL:            v.Status.Artifact.URL,
-			Path:           v.Status.Artifact.Path,
-			Revision:       v.Status.Artifact.Revision,
-			Checksum:       v.Status.Artifact.Checksum,
-			LastUpdateTime: v.Status.Artifact.LastUpdateTime,
 		}, nil
 	default:
 		return v1alpha1.Artifact{}, fmt.Errorf("unknown type %s", v)
