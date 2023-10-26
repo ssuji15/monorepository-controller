@@ -118,7 +118,187 @@ func TestMonoRepository(t *testing.T) {
 					}).DieReleasePtr()
 				}).
 				StatusDie(func(d *resources.MonoRepositoryStatusDie) {
-					d.ConditionsDie(v1.ConditionBlank.Type("Ready").Status("True").Reason("Succeeded").Message("Repository has been successfully filtered with checksum h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=")).DieReleasePtr()
+					d.ConditionsDie(resources.MonoRepositoryConditionBlank.Status("True").Reason("Succeeded").Message("Repository has been successfully filtered with checksum h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=")).DieReleasePtr()
+					d.Artifact(&v1alpha1.Artifact{
+						Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+						URL:            "http://localhost:8080/file.tar.gz",
+						Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+						LastUpdateTime: metav1.Time{},
+						Size:           pointer.Int64(12742),
+					}).DieReleasePtr()
+					d.URL("http://localhost:8080/file.tar.gz")
+				}).DieReleasePtr(),
+
+			GivenObjects: []client.Object{
+				&apiv1beta2.GitRepository{
+					TypeMeta: metav1.TypeMeta{},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "mono-repository",
+						Namespace: "dev",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion:         "source.garethjevans.org/v1alpha1",
+								Kind:               "MonoRepository",
+								Name:               "mono-repository",
+								Controller:         pointer.Bool(true),
+								BlockOwnerDeletion: pointer.Bool(true),
+							},
+						},
+					},
+					Spec: apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					},
+					Status: apiv1beta2.GitRepositoryStatus{
+						Conditions: []metav1.Condition{
+							{
+								Type:    "Ready",
+								Status:  "True",
+								Reason:  "Succeeded",
+								Message: "stored artifact for revision 'main@sha1:531d5230bf97e76e168d1817de64a161195f433d'",
+							},
+						},
+						Artifact: &apiv1.Artifact{
+							Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+							URL:            "http://localhost:8080/file.tar.gz",
+							Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+							Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+							LastUpdateTime: metav1.Time{},
+							Size:           pointer.Int64(12742),
+							Metadata:       nil,
+						},
+					},
+				},
+			},
+		},
+
+		"Will reconcile a when there is nothing to update": {
+			Resource: baseMonoRepo.
+				MetadataDie(func(d *v1.ObjectMetaDie) {
+					d.CreationTimestamp(metav1.Time{})
+					d.Generation(1)
+				}).
+				SpecDie(func(d *resources.MonoRepositorySpecDie) {
+					d.GitRepository(apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					})
+				}).
+				StatusDie(func(d *resources.MonoRepositoryStatusDie) {
+					d.Artifact(&v1alpha1.Artifact{
+						Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+						URL:            "http://localhost:8080/file.tar.gz",
+						Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+						LastUpdateTime: metav1.Time{},
+						Size:           pointer.Int64(12742),
+					}).DieReleasePtr()
+					d.URL("http://localhost:8080/file.tar.gz")
+				}).DieReleasePtr(),
+
+			ExpectResource: baseMonoRepo.
+				MetadataDie(func(d *v1.ObjectMetaDie) {
+					d.CreationTimestamp(metav1.Time{})
+					d.Generation(1)
+				}).
+				SpecDie(func(d *resources.MonoRepositorySpecDie) {
+					d.GitRepository(apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					}).DieReleasePtr()
+				}).
+				StatusDie(func(d *resources.MonoRepositoryStatusDie) {
+					d.ConditionsDie(resources.MonoRepositoryConditionBlank.Status("True").Reason("Succeeded").Message("Repository has been successfully filtered with checksum h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=")).DieReleasePtr()
+					d.Artifact(&v1alpha1.Artifact{
+						Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+						URL:            "http://localhost:8080/file.tar.gz",
+						Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+						LastUpdateTime: metav1.Time{},
+						Size:           pointer.Int64(12742),
+					}).DieReleasePtr()
+					d.URL("http://localhost:8080/file.tar.gz")
+				}).DieReleasePtr(),
+
+			GivenObjects: []client.Object{
+				&apiv1beta2.GitRepository{
+					TypeMeta: metav1.TypeMeta{},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "mono-repository",
+						Namespace: "dev",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion:         "source.garethjevans.org/v1alpha1",
+								Kind:               "MonoRepository",
+								Name:               "mono-repository",
+								Controller:         pointer.Bool(true),
+								BlockOwnerDeletion: pointer.Bool(true),
+							},
+						},
+					},
+					Spec: apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					},
+					Status: apiv1beta2.GitRepositoryStatus{
+						Conditions: []metav1.Condition{
+							{
+								Type:    "Ready",
+								Status:  "True",
+								Reason:  "Succeeded",
+								Message: "stored artifact for revision 'main@sha1:531d5230bf97e76e168d1817de64a161195f433d'",
+							},
+						},
+						Artifact: &apiv1.Artifact{
+							Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+							URL:            "http://localhost:8080/file.tar.gz",
+							Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+							Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+							LastUpdateTime: metav1.Time{},
+							Size:           pointer.Int64(12742),
+							Metadata:       nil,
+						},
+					},
+				},
+			},
+		},
+
+		"Will reconcile a when there are changes to apply": {
+			Resource: baseMonoRepo.
+				MetadataDie(func(d *v1.ObjectMetaDie) {
+					d.CreationTimestamp(metav1.Time{})
+					d.Generation(1)
+				}).
+				SpecDie(func(d *resources.MonoRepositorySpecDie) {
+					d.GitRepository(apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					})
+				}).
+				StatusDie(func(d *resources.MonoRepositoryStatusDie) {
+					d.Artifact(&v1alpha1.Artifact{
+						Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
+						URL:            "http://localhost:8080/previous.tar.gz",
+						Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
+						Checksum:       "h1:previous",
+						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
+						LastUpdateTime: metav1.Time{},
+						Size:           pointer.Int64(12742),
+					}).DieReleasePtr()
+					d.URL("http://localhost:8080/previous.tar.gz")
+				}).DieReleasePtr(),
+
+			ExpectResource: baseMonoRepo.
+				MetadataDie(func(d *v1.ObjectMetaDie) {
+					d.CreationTimestamp(metav1.Time{})
+					d.Generation(1)
+				}).
+				SpecDie(func(d *resources.MonoRepositorySpecDie) {
+					d.GitRepository(apiv1beta2.GitRepositorySpec{
+						URL: "https://github.com/org/repo",
+					}).DieReleasePtr()
+				}).
+				StatusDie(func(d *resources.MonoRepositoryStatusDie) {
+					d.ConditionsDie(resources.MonoRepositoryConditionBlank.Status("True").Reason("Succeeded").Message("Repository has been successfully filtered with checksum h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=")).DieReleasePtr()
 					d.Artifact(&v1alpha1.Artifact{
 						Path:           "gitrepository/dev/my-mono-repository/531d5230bf97e76e168d1817de64a161195f433d.tar.gz",
 						URL:            "http://localhost:8080/file.tar.gz",
