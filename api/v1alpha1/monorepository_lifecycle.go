@@ -46,6 +46,6 @@ func (b *MonoRepositoryStatus) MarkFailed(err error) {
 	containerCondSet.Manage(b).MarkFalse(MonoRepositoryConditionReady, MonoRepositoryFailedReason, err.Error())
 }
 
-func (b *MonoRepositoryStatus) MarkReady() {
-	containerCondSet.Manage(b).MarkTrue(MonoRepositoryConditionReady, MonoRepositorySucceededReason, "Repository has been successfully filtered for change")
+func (b *MonoRepositoryStatus) MarkReady(checksum string) {
+	containerCondSet.Manage(b).MarkTrue(MonoRepositoryConditionReady, MonoRepositorySucceededReason, "Repository has been successfully filtered with checksum %s", checksum)
 }
