@@ -25,6 +25,5 @@ func (d *MonoRepositoryStatusDie) ConditionsDie(conditions ...*v1.ConditionDie) 
 }
 
 var (
-	FilterReadyBlank           = v1.ConditionBlank.Type(v1alpha1.MonoRepositoryConditionReady)
-	FilterResourceMappingBlank = v1.ConditionBlank.Type(v1alpha1.MonoRepositorySourceMapping)
+	MonoRepositoryConditionBlank = v1.ConditionBlank.Type(v1alpha1.MonoRepositoryConditionReady)
 )
