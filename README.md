@@ -20,6 +20,7 @@ Validate that the install is working:
 kubectl get pkgi -n tap-install monorepository
 ```
 
+An overlay to install this as part of the standard source-template can be found in the [./resources](resources) directory.
 ## Example
 
 Then create a `MonoRepository` that wraps a `GitRepository` e.g.
