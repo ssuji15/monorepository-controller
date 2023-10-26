@@ -34,7 +34,7 @@ import (
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories/finalizers,verbs=update
-//+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch
+//+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=events,verbs=patch;create;update
 
 func NewMonoRepositoryReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*v1alpha1.MonoRepository] {
@@ -51,8 +51,6 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 	return &reconcilers.ChildReconciler[*v1alpha1.MonoRepository, *apiv1beta2.GitRepository, *apiv1beta2.GitRepositoryList]{
 		Name: "GitRepository",
 		DesiredChild: func(ctx context.Context, parent *v1alpha1.MonoRepository) (*apiv1beta2.GitRepository, error) {
-			//log := util.L(ctx)
-
 			child := &apiv1beta2.GitRepository{
 				ObjectMeta: v1.ObjectMeta{
 					Labels:      FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Labels)),
@@ -151,7 +149,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 					}
 
 					//resource.Status.ObservedInclude = resource.Spec.Include
-					parent.Status.MarkReady()
+					parent.Status.MarkReady(hash)
 				}
 			}
 		},

@@ -94,3 +94,12 @@ status:
     !**/src/test/**
   url: http://source-controller.default.svc.cluster.local./gitrepository/default/where-for-dinner/68d842cd330410cf0672f862d9a799af4dcdc1d7.tar.gz
 ```
+
+An example of the hierarchy looks like this:
+
+```shell
+❯ kubectl tree monorepositories.source.garethjevans.org/my-mono-repository -n dev
+NAMESPACE  NAME                                READY  REASON     AGE
+dev        MonoRepository/my-mono-repository   True   Succeeded  69s
+dev        └─GitRepository/my-mono-repository  True   Succeeded  69s
+```

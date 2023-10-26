@@ -10,11 +10,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-//+kubebuilder:webhook:path=/integrity-source-garethjevans-org-monorepository,mutating=false,failurePolicy=fail,sideEffects=None,groups=source.garethjevans.org,resources=managedresources,verbs=create;update;delete,versions={v1alpha1},matchPolicy=equivalent,name=integrity.managedresource.source.garethjevans.org,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/integrity-source-garethjevans-org-monorepository,mutating=false,failurePolicy=fail,sideEffects=None,groups=source.garethjevans.org,resources=monorepositories,verbs=create;update;delete,versions={v1alpha1},matchPolicy=equivalent,name=integrity.monorepository.source.garethjevans.org,admissionReviewVersions={v1,v1beta1}
 
 func RegisterReferentialIntegrityWebhooks(mgr manager.Manager) {
 	c := reconcilers.NewConfig(mgr, nil, 0)
-	mgr.GetWebhookServer().Register("/integrity-source-garethjevans-org-managedresource", MonoRepositoryReferentialIntegrityWebhook(c).Build())
+	mgr.GetWebhookServer().Register("/integrity-source-garethjevans-org-monorepository", MonoRepositoryReferentialIntegrityWebhook(c).Build())
 }
 
 // +kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch
