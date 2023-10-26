@@ -1,6 +1,8 @@
 package controller_test
 
 import (
+	"testing"
+
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	"github.com/garethjevans/monorepository-controller/internal/controller"
 	"github.com/garethjevans/monorepository-controller/internal/tests/resources"
@@ -9,7 +11,6 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 
 	apiv1 "github.com/fluxcd/source-controller/api/v1"
 	apiv1beta1 "github.com/fluxcd/source-controller/api/v1beta1"
