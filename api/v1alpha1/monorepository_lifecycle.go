@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vmware-labs/reconciler-runtime/apis"
@@ -25,27 +26,27 @@ var containerCondSet = apis.NewLivingConditionSet(
 	MonoRepositoryArtifactResolved,
 )
 
-func (b *MonoRepositoryStatus) MarkResourceMissing(resource string, component string, namespace string) {
+func (b *MonoRepositoryStatus) MarkResourceMissing(ctx context.Context, resource string, component string, namespace string) {
 	template := "resource `%s` missing. " +
 		"filter is trying to find resource `%s` in namespace `%s`"
 
 	message := fmt.Sprintf(template, resource, component, namespace)
 
-	containerCondSet.Manage(b).MarkFalse(MonoRepositorySourceMapping, MonoRepositoryNoSuchSourceReason, message)
+	containerCondSet.ManageWithContext(ctx, b).MarkFalse(MonoRepositorySourceMapping, MonoRepositoryNoSuchSourceReason, message)
 }
 
-func (b *MonoRepositoryStatus) MarkArtifactResolved(url string) {
+func (b *MonoRepositoryStatus) MarkArtifactResolved(ctx context.Context, url string) {
 	template := "resolved artifact from url %s"
 
 	message := fmt.Sprintf(template, url)
 
-	containerCondSet.Manage(b).MarkTrue(MonoRepositoryArtifactResolved, MonoRepositoryArtifactResolvedReason, message)
+	containerCondSet.ManageWithContext(ctx, b).MarkTrue(MonoRepositoryArtifactResolved, MonoRepositoryArtifactResolvedReason, message)
 }
 
-func (b *MonoRepositoryStatus) MarkFailed(err error) {
-	containerCondSet.Manage(b).MarkFalse(MonoRepositoryConditionReady, MonoRepositoryFailedReason, err.Error())
+func (b *MonoRepositoryStatus) MarkFailed(ctx context.Context, err error) {
+	containerCondSet.ManageWithContext(ctx, b).MarkFalse(MonoRepositoryConditionReady, MonoRepositoryFailedReason, err.Error())
 }
 
-func (b *MonoRepositoryStatus) MarkReady(checksum string) {
-	containerCondSet.Manage(b).MarkTrue(MonoRepositoryConditionReady, MonoRepositorySucceededReason, "Repository has been successfully filtered with checksum %s", checksum)
+func (b *MonoRepositoryStatus) MarkReady(ctx context.Context, checksum string) {
+	containerCondSet.ManageWithContext(ctx, b).MarkTrue(MonoRepositoryConditionReady, MonoRepositorySucceededReason, "Repository has been successfully filtered with checksum %s", checksum)
 }

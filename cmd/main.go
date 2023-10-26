@@ -19,9 +19,10 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"github.com/garethjevans/monorepository-controller/internal/integrity"
 	"os"
 	"time"
+
+	"github.com/garethjevans/monorepository-controller/internal/integrity"
 
 	v1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/fluxcd/source-controller/api/v1beta1"
