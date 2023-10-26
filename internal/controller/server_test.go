@@ -1,4 +1,4 @@
-package controller
+package controller_test
 
 import (
 	"archive/tar"
@@ -9,16 +9,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 )
 
-func ServeDir(path string) {
+func ServeDir(t *testing.T, path string) {
 	http.HandleFunc("/file.tar.gz", func(writer http.ResponseWriter, request *http.Request) {
 		gw := gzip.NewWriter(writer)
 		defer gw.Close()
 		tw := tar.NewWriter(gw)
 		defer tw.Close()
 
-		filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -37,14 +38,21 @@ func ServeDir(path string) {
 			_, err = io.Copy(tw, fh)
 			return err
 		})
+		if err != nil {
+			t.Errorf("unable to walk dir %s: %v", path, err)
+		}
 	})
 
 	log.Println("Starting server....")
 
 	listener, err := net.Listen("tcp", "localhost:8080")
 	if err != nil {
-		log.Fatal(err)
+		t.Errorf("unable to bind %v", err)
 	}
 
-	http.Serve(listener, nil)
+	// #nosec
+	err = http.Serve(listener, nil)
+	if err != nil {
+		t.Errorf("unable to serve %v", err)
+	}
 }

@@ -41,7 +41,7 @@ func TestMonoRepository(t *testing.T) {
 			d.Namespace("dev")
 		})
 
-	go controller.ServeDir("testdata")
+	go ServeDir(t, "testdata")
 
 	ts := rtesting.SubReconcilerTests[*v1alpha1.MonoRepository]{
 		"Contains a sub resource": {
