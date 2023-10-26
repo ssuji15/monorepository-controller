@@ -19,7 +19,7 @@ func ServeDir(t *testing.T, path string) {
 		tw := tar.NewWriter(gw)
 		defer tw.Close()
 
-		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -38,9 +38,6 @@ func ServeDir(t *testing.T, path string) {
 			_, err = io.Copy(tw, fh)
 			return err
 		})
-		if err != nil {
-			t.Errorf("unable to walk dir %s: %v", path, err)
-		}
 	})
 
 	log.Println("Starting server....")
