@@ -42,7 +42,7 @@ func FilterFileList(list []string, include string) []string {
 // write as it downloads and not load the whole file into memory.
 func DownloadFile(filepath string, url string) error {
 	// Get the data
-	resp, err := http.Get(url)
+	resp, err := http.Get(validate(url))
 	if err != nil {
 		return err
 	}
@@ -58,4 +58,11 @@ func DownloadFile(filepath string, url string) error {
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+func validate(in string) string {
+	if strings.HasPrefix(in, "https://") && strings.HasPrefix(in, "http://") {
+		panic("unable to use url" + in)
+	}
+	return in
 }

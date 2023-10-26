@@ -19,16 +19,17 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
 	apiv1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/garethjevans/monorepository-controller/api/v1alpha1"
 	"github.com/garethjevans/monorepository-controller/internal/util"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
-	"io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
@@ -73,12 +74,11 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 			if child == nil {
 				// parent.Status.MarkCustomRunFailed("Failed", "Failed to resolve")
 			} else {
-
 				// if child status == Ready == true
 				if isReady(child) {
 					tempDir, err := os.MkdirTemp("", "tmp")
 					if err != nil {
-						parent.Status.MarkFailed(err)
+						parent.Status.MarkFailed(ctx, err)
 						return
 					}
 					// cleanup on exit
@@ -90,7 +90,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 					tarGzLocation := filepath.Join(tempDir, fmt.Sprintf("%s.tar.gz", child.Name))
 					err = util.DownloadFile(tarGzLocation, child.Status.Artifact.URL)
 					if err != nil {
-						parent.Status.MarkFailed(err)
+						parent.Status.MarkFailed(ctx, err)
 						return
 					}
 
@@ -98,13 +98,13 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 					tarGzExtractedLocation := filepath.Join(tempDir, fmt.Sprintf("%s-extracted", child.Name))
 					err = util.ExtractTarGz(tarGzLocation, tarGzExtractedLocation)
 					if err != nil {
-						parent.Status.MarkFailed(err)
+						parent.Status.MarkFailed(ctx, err)
 						return
 					}
 
 					files, err := util.ListFiles(tarGzExtractedLocation)
 					if err != nil {
-						parent.Status.MarkFailed(err)
+						parent.Status.MarkFailed(ctx, err)
 						return
 					}
 
@@ -117,7 +117,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 						return os.Open(filepath.Join(tarGzExtractedLocation, name))
 					})
 					if err != nil {
-						parent.Status.MarkFailed(err)
+						parent.Status.MarkFailed(ctx, err)
 						return
 					}
 
@@ -149,7 +149,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 					}
 
 					//resource.Status.ObservedInclude = resource.Spec.Include
-					parent.Status.MarkReady(hash)
+					parent.Status.MarkReady(ctx, hash)
 				}
 			}
 		},
