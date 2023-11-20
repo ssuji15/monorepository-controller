@@ -7,7 +7,7 @@ require (
 	github.com/fluxcd/pkg/apis/meta v1.1.2
 	github.com/fluxcd/pkg/sourceignore v0.3.5
 	github.com/fluxcd/source-controller/api v1.1.2
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.3.0
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-labs/reconciler-runtime v0.15.1
 	golang.org/x/mod v0.14.0
