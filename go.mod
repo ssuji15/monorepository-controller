@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	dies.dev v0.9.0
-	github.com/fluxcd/pkg/apis/meta v1.1.2
+	github.com/fluxcd/pkg/apis/meta v1.2.0
 	github.com/fluxcd/pkg/sourceignore v0.3.5
 	github.com/fluxcd/source-controller/api v1.1.2
 	github.com/go-logr/logr v1.3.0
