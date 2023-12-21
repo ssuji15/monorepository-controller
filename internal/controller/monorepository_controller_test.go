@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1 "github.com/fluxcd/source-controller/api/v1"
@@ -75,8 +75,8 @@ func TestMonoRepository(t *testing.T) {
 								APIVersion:         "source.garethjevans.org/v1alpha1",
 								Kind:               "MonoRepository",
 								Name:               "mono-repository",
-								Controller:         pointer.Bool(true),
-								BlockOwnerDeletion: pointer.Bool(true),
+								Controller:         ptr.To(true),
+								BlockOwnerDeletion: ptr.To(true),
 							},
 						},
 					},
@@ -126,7 +126,7 @@ func TestMonoRepository(t *testing.T) {
 						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
 						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 						LastUpdateTime: metav1.Time{},
-						Size:           pointer.Int64(12742),
+						Size:           ptr.To(int64(12742)),
 					}).DieReleasePtr()
 					d.URL("http://localhost:8080/file.tar.gz")
 				}).DieReleasePtr(),
@@ -142,8 +142,8 @@ func TestMonoRepository(t *testing.T) {
 								APIVersion:         "source.garethjevans.org/v1alpha1",
 								Kind:               "MonoRepository",
 								Name:               "mono-repository",
-								Controller:         pointer.Bool(true),
-								BlockOwnerDeletion: pointer.Bool(true),
+								Controller:         ptr.To(true),
+								BlockOwnerDeletion: ptr.To(true),
 							},
 						},
 					},
@@ -165,7 +165,7 @@ func TestMonoRepository(t *testing.T) {
 							Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
 							Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 							LastUpdateTime: metav1.Time{},
-							Size:           pointer.Int64(12742),
+							Size:           ptr.To(int64(12742)),
 							Metadata:       nil,
 						},
 					},
@@ -192,7 +192,7 @@ func TestMonoRepository(t *testing.T) {
 						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
 						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 						LastUpdateTime: metav1.Time{},
-						Size:           pointer.Int64(12742),
+						Size:           ptr.To(int64(12742)),
 					}).DieReleasePtr()
 					d.URL("http://localhost:8080/file.tar.gz")
 				}).DieReleasePtr(),
@@ -216,7 +216,7 @@ func TestMonoRepository(t *testing.T) {
 						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
 						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 						LastUpdateTime: metav1.Time{},
-						Size:           pointer.Int64(12742),
+						Size:           ptr.To(int64(12742)),
 					}).DieReleasePtr()
 					d.URL("http://localhost:8080/file.tar.gz")
 				}).DieReleasePtr(),
@@ -232,8 +232,8 @@ func TestMonoRepository(t *testing.T) {
 								APIVersion:         "source.garethjevans.org/v1alpha1",
 								Kind:               "MonoRepository",
 								Name:               "mono-repository",
-								Controller:         pointer.Bool(true),
-								BlockOwnerDeletion: pointer.Bool(true),
+								Controller:         ptr.To(true),
+								BlockOwnerDeletion: ptr.To(true),
 							},
 						},
 					},
@@ -255,7 +255,7 @@ func TestMonoRepository(t *testing.T) {
 							Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
 							Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 							LastUpdateTime: metav1.Time{},
-							Size:           pointer.Int64(12742),
+							Size:           ptr.To(int64(12742)),
 							Metadata:       nil,
 						},
 					},
@@ -282,7 +282,7 @@ func TestMonoRepository(t *testing.T) {
 						Checksum:       "h1:previous",
 						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 						LastUpdateTime: metav1.Time{},
-						Size:           pointer.Int64(12742),
+						Size:           ptr.To(int64(12742)),
 					}).DieReleasePtr()
 					d.URL("http://localhost:8080/previous.tar.gz")
 				}).DieReleasePtr(),
@@ -306,7 +306,7 @@ func TestMonoRepository(t *testing.T) {
 						Checksum:       "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
 						Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 						LastUpdateTime: metav1.Time{},
-						Size:           pointer.Int64(12742),
+						Size:           ptr.To(int64(12742)),
 					}).DieReleasePtr()
 					d.URL("http://localhost:8080/file.tar.gz")
 				}).DieReleasePtr(),
@@ -322,8 +322,8 @@ func TestMonoRepository(t *testing.T) {
 								APIVersion:         "source.garethjevans.org/v1alpha1",
 								Kind:               "MonoRepository",
 								Name:               "mono-repository",
-								Controller:         pointer.Bool(true),
-								BlockOwnerDeletion: pointer.Bool(true),
+								Controller:         ptr.To(true),
+								BlockOwnerDeletion: ptr.To(true),
 							},
 						},
 					},
@@ -345,7 +345,7 @@ func TestMonoRepository(t *testing.T) {
 							Revision:       "main@sha1:531d5230bf97e76e168d1817de64a161195f433d",
 							Digest:         "sha256:889c03dea61a629f2f39c2669f08889cb92173a597e41c9da1d471ec2193f536",
 							LastUpdateTime: metav1.Time{},
-							Size:           pointer.Int64(12742),
+							Size:           ptr.To(int64(12742)),
 							Metadata:       nil,
 						},
 					},
