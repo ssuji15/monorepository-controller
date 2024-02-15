@@ -30,6 +30,7 @@ import (
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"golang.org/x/mod/sumdb/dirhash"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 //+kubebuilder:rbac:groups=source.garethjevans.org,resources=monorepositories,verbs=get;list;watch;create;update;patch;delete
@@ -56,7 +57,7 @@ func NewResourceValidator(c reconcilers.Config) reconcilers.SubReconciler[*v1alp
 				ObjectMeta: v1.ObjectMeta{
 					Labels:      FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Labels)),
 					Annotations: FilterLabelsOrAnnotations(reconcilers.MergeMaps(parent.Annotations)),
-					Name:        parent.Name,
+					Name:        generateChildName(parent.Name),
 					Namespace:   parent.Namespace,
 				},
 				Spec: parent.Spec.GitRepository,
@@ -165,4 +166,11 @@ func isReady(child *apiv1beta2.GitRepository) bool {
 		}
 	}
 	return false
+}
+
+func generateChildName(n string) string {
+	if len(n) > 63 {
+		n = n[:57] + "-" + rand.String(5)
+	}
+	return n
 }
